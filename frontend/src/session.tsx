@@ -7,7 +7,7 @@ type Session = {
   spv: string
   setPersona: (id: string) => void
   setSpv: (spv: string) => void
-  meta: { mode: string; model: string; erp_fail: boolean } | null
+  meta: { mode: string; model: string; erp_fail: boolean; demo_tools: boolean } | null
   refreshMeta: () => void
 }
 

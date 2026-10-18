@@ -201,3 +201,11 @@ def test_npwp_pembeli_di_faktur_tidak_memicu_temuan():
     assert _seller_npwp(t, "01.234.111.0-411.000", v) == v.npwp  # AI salah pilih: NPWP pembeli
     t.pages[0]["words"] = [{"text": "99.999.999.9-999.999"}]
     assert _seller_npwp(t, "99.999.999.9-999.999", v) == "99.999.999.9-999.999"  # penjual memang lain
+
+
+def test_demo_tools_bisa_dimatikan(c, monkeypatch):
+    assert c.get("/api/meta").json()["demo_tools"] is True
+    monkeypatch.setenv("OMNI_DEMO_TOOLS", "0")
+    assert c.get("/api/meta").json()["demo_tools"] is False
+    assert c.post("/api/demo/reset", json={"mode": "standard"}, headers=H("hartono")).status_code == 403
+    assert c.post("/api/demo/erp_fail", json={"on": True}, headers=H("hartono")).status_code == 403

@@ -52,7 +52,7 @@ export default function App() {
           {meta && (
             <Tooltip title={meta.mode === 'gemini' ? `Documents are read by ${meta.model}` :
               'No Gemini API key: fields are read with local text patterns'}>
-              <Chip size="small" onClick={(e) => setDemoEl(e.currentTarget)}
+              <Chip size="small" onClick={meta.demo_tools ? (e) => setDemoEl(e.currentTarget) : undefined}
                 label={meta.mode === 'gemini' ? 'Gemini on' : 'Offline mode'}
                 sx={{ bgcolor: meta.mode === 'gemini' ? C.blueSoft : C.warnSoft,
                   color: meta.mode === 'gemini' ? C.blue : C.warn }} />

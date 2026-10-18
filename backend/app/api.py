@@ -64,10 +64,20 @@ def personas(s: Session = Depends(db)):
     return [{**p.model_dump(), "spv_names": {i: spvs[i] for i in p.spvs}} for p in s.exec(select(Persona)).all()]
 
 
+def demo_tools() -> bool:
+    """Reset data & simulasi ERP gagal. Matikan setelah penjurian: OMNI_DEMO_TOOLS=0."""
+    return os.getenv("OMNI_DEMO_TOOLS", "1") != "0"
+
+
+def need_demo_tools():
+    if not demo_tools():
+        raise HTTPException(403, "Demo tools are turned off on this deployment")
+
+
 @router.get("/meta")
 def meta():
     return {"mode": extractor.mode(), "model": os.getenv("GEMINI_MODEL", "gemini-flash-latest"),
-            "erp_fail": STATE["erp_fail"]}
+            "erp_fail": STATE["erp_fail"], "demo_tools": demo_tools()}
 
 
 class Toggle(BaseModel):
@@ -80,6 +90,7 @@ class ResetBody(BaseModel):
 
 @router.post("/demo/reset")
 def demo_reset(body: ResetBody, x_persona: str = Header(...)):
+    need_demo_tools()
     # tanpa Depends(db): koneksi database harus tertutup saat file data diganti
     with session() as s:
         if not s.get(Persona, x_persona):
@@ -95,6 +106,7 @@ def demo_reset(body: ResetBody, x_persona: str = Header(...)):
 
 @router.post("/demo/erp_fail")
 def erp_fail(body: Toggle, p: Persona = Depends(me)):
+    need_demo_tools()
     STATE["erp_fail"] = body.on
     return meta()
 
