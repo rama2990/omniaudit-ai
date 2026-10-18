@@ -7,11 +7,11 @@ https://claude.ai/artifact/QRJ6jQud3em5jUKGaQrLJk
 - 12 slide, bahasa Indonesia, lengkap dengan catatan pembicara.
 - Link ini masih **privat**. Buka link-nya, lalu bagikan lewat menu **Share** supaya juri bisa membuka.
 - Kalau formulir meminta file, unduh dari menu **Export** sebagai PDF.
-- Sebelum submit, isi placeholder `[Nama tim]`, `[Nama hackathon]`, `[anggota tim]`, dan `[URL prototipe Cloud Run]`.
+- Sebelum submit, isi placeholder `[Nama tim]`, `[Nama hackathon]`, dan `[anggota tim]`.
 
 ## Deployed Prototype Link
 
-[URL Cloud Run, menunggu konfirmasi deploy]
+https://omniaudit-648878449957.asia-southeast2.run.app
 
 Tanpa login. Persona dan SPV dipilih di kanan atas.
 
