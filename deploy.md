@@ -36,10 +36,11 @@ Pilihan model dan lokasi (dites 2026-10-18 pada 7 PDF demo, `scripts/gemini_chec
 Dari root repo (Cloud Build membangun `Dockerfile`, tidak perlu Docker lokal):
 
 ```bash
-gcloud run deploy omniaudit --source . --region asia-southeast2 --allow-unauthenticated --memory 2Gi --cpu 2 --min-instances 1 --max-instances 1 --timeout 300 --update-env-vars GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=PROJECT_ID,GOOGLE_CLOUD_LOCATION=global,GEMINI_MODEL=gemini-2.5-flash
+gcloud run deploy omniaudit --source . --region asia-southeast2 --allow-unauthenticated --memory 2Gi --cpu 2 --no-cpu-throttling --min-instances 1 --max-instances 1 --timeout 300 --update-env-vars GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=PROJECT_ID,GOOGLE_CLOUD_LOCATION=global,GEMINI_MODEL=gemini-2.5-flash
 ```
 
 - `--memory 2Gi`: OCR (RapidOCR/onnxruntime) butuh memori lebih dari default 512Mi.
+- `--no-cpu-throttling`: dokumen diproses di background setelah respons upload. Tanpa flag ini CPU dibatasi di luar request, jadi PDF scan butuh sekitar 253 detik (lokal 32 detik). Konsekuensinya CPU ditagih penuh 24 jam, kira-kira Rp1,7 jt/bulan untuk 2 vCPU. Setelah penjurian, kembalikan dengan `gcloud run services update omniaudit --region asia-southeast2 --cpu-throttling`.
 - `--allow-unauthenticated`: URL bisa dibuka siapa saja yang tahu link-nya. Hapus flag ini kalau demo cukup untuk akun Google tertentu.
 - Tanpa env Vertex di atas (dan tanpa API key), aplikasi tetap jalan dalam mode offline (ekstraksi pola teks lokal).
 
