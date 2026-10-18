@@ -33,6 +33,8 @@ COPY --from=web /web/dist /app/frontend/dist
 # item antrean dibaca ulang dengan Gemini di background (app.seed.regemini).
 # Path di DB absolut (/tmp/data/...), jadi hasil seed disimpan lalu disalin balik ke /tmp/data saat start.
 RUN python -m app.seed && mv /tmp/data /app/seed-data
+# Snapshot kedua untuk tombol "Reset to full-run week" (dokumen demo/full-run), dipakai lewat /api/demo/reset.
+RUN python -m app.seed --full-run && mv /tmp/data /app/seed-fullrun
 
 ENV PORT=8080
 EXPOSE 8080

@@ -232,6 +232,25 @@ def regemini():
         process_termin(tid, ext)
 
 
+SNAPSHOTS = {False: Path("/app/seed-data"), True: Path("/app/seed-fullrun")}  # dibuat saat build image
+
+
+def reset(full_run: bool = False):
+    """Kembalikan data demo ke kondisi awal (untuk mengulang take video)."""
+    import threading
+
+    from app.db import engine
+    engine.dispose()
+    snap = SNAPSHOTS[full_run]
+    if snap.exists():  # Cloud Run: salin snapshot, beberapa detik
+        shutil.rmtree(DATA, ignore_errors=True)
+        shutil.copytree(snap, DATA)
+    else:  # lokal: bangun ulang dari awal
+        seed(full_run=full_run)
+    if not full_run:
+        threading.Thread(target=regemini, daemon=True).start()
+
+
 def new_upload(spv_id: str, src: Path, actor: str) -> int:
     with session() as s:
         t = Termin(spv_id=spv_id, filename=src.name, uploaded_by=actor)

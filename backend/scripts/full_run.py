@@ -2,6 +2,8 @@
 
     uv run python scripts/full_run.py           database sementara (aman, tidak menyentuh data server)
     uv run python scripts/full_run.py --live    ke database server; jalankan dulu `python -m app.seed --full-run`
+    uv run python scripts/full_run.py --url https://...run.app   ke situs yang sudah di-deploy: reset ke data
+        full-run, jalankan semua langkah, lalu reset kembali ke demo standar (tambahkan --keep untuk membiarkan hasilnya)
 
 Mode Gemini mengikuti backend/.env (GEMINI_MODE=auto memakai Gemini bila GEMINI_API_KEY ada).
 """
@@ -15,10 +17,12 @@ import time
 ap = argparse.ArgumentParser()
 ap.add_argument("--live", action="store_true", help="pakai database server (hasil terlihat di aplikasi)")
 ap.add_argument("--offline", action="store_true", help="paksa pembaca pola teks lokal (tidak memakai kuota Gemini)")
+ap.add_argument("--url", help="jalankan ke situs yang sudah di-deploy (mis. Cloud Run)")
+ap.add_argument("--keep", action="store_true", help="dengan --url: jangan reset ke demo standar setelah selesai")
 args = ap.parse_args()
 if args.offline:
     os.environ["GEMINI_MODE"] = "fake"
-if not args.live:
+if not args.live and not args.url:
     tmp = tempfile.mkdtemp(prefix="omni-fullrun-")
     os.environ["OMNI_DATA"] = os.path.join(tmp, "data")
     os.environ["OMNI_DEMO"] = os.path.join(tmp, "demo")
@@ -32,7 +36,9 @@ from app.db import session  # noqa: E402
 from app.models import Termin  # noqa: E402
 from app.seed import DEMO, seed  # noqa: E402
 
-if args.live:
+if args.url:
+    pass
+elif args.live:
     with session() as s:
         if s.exec(select(Termin).where(Termin.uploaded_by != "arsip")).first():
             sys.exit("Database server sudah berisi tagihan. Jalankan dulu: uv run python -m app.seed --full-run")
@@ -40,7 +46,14 @@ else:
     print("Menyiapkan database sementara (data master + dokumen full run)…")
     seed(full_run=True)
 
-from app.main import app  # noqa: E402
+if args.url:
+    import httpx  # noqa: E402
+
+    client = httpx.Client(base_url=args.url.rstrip("/"), timeout=300)
+else:
+    from app.main import app  # noqa: E402
+
+    client = TestClient(app)
 
 FR = DEMO / "full-run"
 spec = json.loads((FR / "skenario.json").read_text(encoding="utf-8"))
@@ -61,9 +74,17 @@ def rp(n):
     return "Rp" + f"{int(n):,}".replace(",", ".")
 
 
-with TestClient(app) as c:
-    print(f"Mode ekstraksi: {extractor.mode()}  |  dokumen: {FR}")
-    if extractor.mode() == "gemini":
+with client as c:
+    if args.url:
+        print(f"Situs: {args.url}  |  reset ke data full-run…")
+        r = c.post("/api/demo/reset", json={"mode": "full_run"}, headers=H("hartono"))
+        if r.status_code != 200:
+            sys.exit(f"Reset gagal: {r.status_code} {r.text[:200]}")
+        mode = c.get("/api/meta").json()["mode"]
+    else:
+        mode = extractor.mode()
+    print(f"Mode ekstraksi: {mode}  |  dokumen: {FR}")
+    if mode == "gemini":
         print(f"Catatan: memakai {len(spec['ap'])} request Gemini (kuota gratis: sekitar 20 per hari per model).")
     print()
     print("TAGIHAN KONTRAKTOR (AP)")
@@ -76,7 +97,11 @@ with TestClient(app) as c:
         if not check(sid, r.status_code == 200, f"unggah gagal: {r.text}"):
             continue
         tid = r.json()["id"]
-        t = c.get(f"/api/ap/termin/{tid}", headers=H(st["persona"])).json()
+        for _ in range(150):  # situs live memproses di background
+            t = c.get(f"/api/ap/termin/{tid}", headers=H(st["persona"])).json()
+            if t["status"] != "PROCESSING":
+                break
+            time.sleep(2)
         e = st["expect"]
         codes = sorted({a["code"] for a in t["anomalies"]})
         check(sid, t["status"] == e["status"], f"status {t['status']} (harap {e['status']})"
@@ -163,6 +188,9 @@ with TestClient(app) as c:
     d = c.get("/api/dashboard?spv=ALL", headers=H("hartono")).json()
     print(f"  Antrean CFO kosong: {not cfo} | jejak audit utuh: {v['ok']} ({v['checked']} entri)")
     print(f"  Kebocoran dicegah: {rp(d['leakage_prevented'])} | dana belum teralokasi: {rp(d['unallocated_ar'])}")
+    if args.url and not args.keep:
+        r = c.post("/api/demo/reset", json={"mode": "standard"}, headers=H("hartono"))
+        print(f"  Situs dikembalikan ke demo standar: {'ya' if r.status_code == 200 else 'GAGAL ' + r.text[:120]}")
 
 print()
 if fails:

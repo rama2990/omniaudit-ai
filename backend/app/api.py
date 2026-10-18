@@ -74,6 +74,25 @@ class Toggle(BaseModel):
     on: bool
 
 
+class ResetBody(BaseModel):
+    mode: str = "standard"
+
+
+@router.post("/demo/reset")
+def demo_reset(body: ResetBody, x_persona: str = Header(...)):
+    # tanpa Depends(db): koneksi database harus tertutup saat file data diganti
+    with session() as s:
+        if not s.get(Persona, x_persona):
+            raise HTTPException(401, "Unknown persona")
+    if body.mode not in ("standard", "full_run"):
+        raise HTTPException(422, "Mode must be standard or full_run")
+    from app.seed import reset
+    reset(full_run=body.mode == "full_run")
+    STATE["erp_fail"] = False
+    pipeline.TELEMETRY.clear()
+    return {"ok": True, "mode": body.mode}
+
+
 @router.post("/demo/erp_fail")
 def erp_fail(body: Toggle, p: Persona = Depends(me)):
     STATE["erp_fail"] = body.on

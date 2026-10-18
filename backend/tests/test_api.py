@@ -178,3 +178,14 @@ def test_gemini_gagal_beralih_ke_pembaca_offline(c, monkeypatch):
     t = upload(c, "05_kontrak_E_salah_hitung.pdf", "TRD2")
     assert t["status"] != "GAGAL_PROSES" and t["fallback"].startswith("Gemini quota")
     assert any("Switching" in e["msg"] for e in t["telemetry"])
+
+
+def test_demo_reset(c, monkeypatch):
+    from app import seed as sm
+    calls = []
+    monkeypatch.setattr(sm, "seed", lambda **kw: calls.append(kw))
+    monkeypatch.setattr(sm, "regemini", lambda: None)
+    assert c.post("/api/demo/reset", json={"mode": "bogus"}, headers=H("dewi")).status_code == 422
+    assert c.post("/api/demo/reset", json={"mode": "full_run"}, headers=H("nobody")).status_code == 401
+    assert c.post("/api/demo/reset", json={"mode": "full_run"}, headers=H("dewi")).json()["mode"] == "full_run"
+    assert calls == [{"full_run": True}]

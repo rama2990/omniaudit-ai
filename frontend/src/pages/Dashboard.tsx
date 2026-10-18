@@ -149,8 +149,8 @@ export default function Dashboard() {
 
       {m && (
         <Paper sx={{ display: 'flex', flexWrap: 'wrap', mb: 3, '& > div + div': { borderLeft: { md: `1px solid ${C.outline}` } } }}>
-          <Metric label="Unallocated buyer payments" value={rp(m.unallocated_ar)} note={`${m.unallocated_count} payments`} />
-          <Metric label="Contractor bills awaiting audit" value={rp(m.pending_ap)} note={`${m.pending_ap_count} bills, verified value`} />
+          <Metric label="Unallocated buyer payments" value={rp(m.unallocated_ar)} note={`${m.unallocated_count} ${m.unallocated_count === 1 ? "payment" : "payments"}`} />
+          <Metric label="Contractor bills awaiting audit" value={rp(m.pending_ap)} note={`${m.pending_ap_count} ${m.pending_ap_count === 1 ? "bill" : "bills"}, verified value`} />
           <Metric label="Disputes & hard stops" value={String(m.flagged)} tone={m.flagged ? C.bad : C.ink} note="locked bills" />
           <Metric label="Average audit time" value={m.velocity_min !== null ? `${m.velocity_min} min` : '–'} note="upload to posted, last 30 days" />
           <Metric label="Leakage prevented" value={rp(m.leakage_prevented)} tone={C.ok} note="claimed minus verified" />

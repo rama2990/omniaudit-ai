@@ -1,6 +1,7 @@
 import FactCheckOutlined from '@mui/icons-material/FactCheckOutlined'
 import {
-  AppBar, Box, Chip, FormControlLabel, Menu, MenuItem, Select, Switch, Tab, Tabs, Toolbar, Tooltip, Typography,
+  AppBar, Backdrop, Box, Chip, CircularProgress, Divider, FormControlLabel, Menu, MenuItem, Select, Switch, Tab, Tabs,
+  Toolbar, Tooltip, Typography,
 } from '@mui/material'
 import { useState } from 'react'
 import { Link, Route, Routes, useLocation } from 'react-router-dom'
@@ -16,7 +17,21 @@ export default function App() {
   const { personas, persona, setPersona, spv, setSpv, meta, refreshMeta } = useSession()
   const loc = useLocation()
   const [demoEl, setDemoEl] = useState<HTMLElement | null>(null)
+  const [resetting, setResetting] = useState(false)
   const tab = loc.pathname.startsWith('/cfo') ? '/cfo' : '/'
+
+  const resetDemo = async (mode: 'standard' | 'full_run') => {
+    setDemoEl(null)
+    if (!window.confirm('Reset all demo data? Every upload and decision made so far will be cleared.')) return
+    setResetting(true)
+    try {
+      await api.post('/demo/reset', { mode })
+      window.location.href = '/'
+    } catch (e) {
+      setResetting(false)
+      window.alert(`Reset failed: ${(e as Error).message}`)
+    }
+  }
 
   if (!persona) return <Box sx={{ p: 4 }}>Loading…</Box>
   const isCfo = persona.role === 'ROLE_CFO_EXEC'
@@ -51,7 +66,14 @@ export default function App() {
                 label="Simulate ERP failure"
               />
             </MenuItem>
+            <Divider />
+            <MenuItem onClick={() => resetDemo('standard')}>Reset to standard demo data</MenuItem>
+            <MenuItem onClick={() => resetDemo('full_run')}>Reset to full-run week (empty queue)</MenuItem>
           </Menu>
+          <Backdrop open={resetting} sx={{ zIndex: 2000, color: '#fff', flexDirection: 'column', gap: 2 }}>
+            <CircularProgress color="inherit" />
+            <Typography>Resetting demo data…</Typography>
+          </Backdrop>
           <Select size="small" value={spv} onChange={(e) => setSpv(e.target.value)} sx={{ minWidth: 200 }}
             aria-label="Select SPV">
             {isCfo && <MenuItem value="ALL">All SPVs</MenuItem>}
