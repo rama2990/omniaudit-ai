@@ -211,7 +211,7 @@ rows = [("Gemini 2.5 Flash on Vertex AI", "Page classification and field extract
         ("Cloud Firestore", "Durable mirror of the audit trail and posted ERP journals"),
         ("Cloud Build / Artifact Registry", "Source-to-container builds for each deploy"),
         ("PyMuPDF + RapidOCR", "Local OCR with word coordinates for evidence boxes; page images never leave the server"),
-        ("FastAPI, SQLModel, Python Decimal", "Agent pipeline, rule engine and tax calculator, 77 automated tests"),
+        ("FastAPI, SQLModel, Python Decimal", "Agent pipeline, rule engine and tax calculator, 80 automated tests"),
         ("React, Vite, Material UI, pdf.js", "Dashboard, split-view audit screen, reconciliation and CFO room")]
 tbl = S[8].shapes.add_table(len(rows), 2, Inches(0.4), Inches(1.4), Inches(9.2), Inches(3.8)).table
 tbl.columns[0].width, tbl.columns[1].width = Inches(2.9), Inches(6.3)
@@ -249,7 +249,7 @@ text(S[10], 7.3, 1.4, 2.3, 3.9, [("Dashboard", {"bold": True, "size": 11}), ("Un
 stats = [("15 / 15", "full-run scenario steps pass on the live Cloud Run site with Gemini 2.5 Flash (12 bills + 3 bank statements)"),
          ("98 / 98", "fields matched in the Gemini extraction check on the demo documents"),
          ("15–25 s", "per digital bill end to end on Cloud Run; about 50 s for a scanned bill with local OCR"),
-         ("77", "automated tests pass, including tax and journal examples that match to the rupiah"),
+         ("80", "automated tests pass, including tax and journal examples that match to the rupiah"),
          ("IDR 540.8M", "overpayment prevented in the simulated work week (claimed minus verified)")]
 for i, (n, d) in enumerate(stats):
     col, row = i % 2, i // 2
