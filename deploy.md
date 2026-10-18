@@ -31,12 +31,22 @@ Pilihan model dan lokasi (dites 2026-10-18 pada 7 PDF demo, `scripts/gemini_chec
 - `gemini-2.5-flash-lite`: 96/98, sekitar 3 detik, tetapi salah membaca total tagihan di skenario F (nominal digelembungkan). Tidak dipakai.
 - Lokasi `asia-southeast2` (Jakarta) menolak model ini, jadi pakai `global`. Artinya data tidak dijamin diproses di Jakarta.
 
+## 2b. Firestore (cermin jejak audit & jurnal ERP)
+
+Setiap entri jejak audit (koleksi `audit_log`, ID dokumen = hash rantai) dan setiap batch jurnal ERP (koleksi `erp_journals`) ditulis juga ke Firestore di background bila `FIRESTORE_ENABLED=1`. SQLite tetap sumber kebenaran; kalau Firestore gagal, aplikasi jalan terus dan kegagalan hanya dicatat di log.
+
+```bash
+gcloud services enable firestore.googleapis.com
+gcloud firestore databases create --location=asia-southeast2 --type=firestore-native
+gcloud projects add-iam-policy-binding PROJECT_ID --member="serviceAccount:PROJECT_NUMBER-compute@developer.gserviceaccount.com" --role="roles/datastore.user"
+```
+
 ## 3. Deploy
 
 Dari root repo (Cloud Build membangun `Dockerfile`, tidak perlu Docker lokal):
 
 ```bash
-gcloud run deploy omniaudit --source . --region asia-southeast2 --allow-unauthenticated --memory 2Gi --cpu 2 --no-cpu-throttling --min-instances 1 --max-instances 1 --timeout 300 --update-env-vars GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=PROJECT_ID,GOOGLE_CLOUD_LOCATION=global,GEMINI_MODEL=gemini-2.5-flash
+gcloud run deploy omniaudit --source . --region asia-southeast2 --allow-unauthenticated --memory 2Gi --cpu 2 --no-cpu-throttling --min-instances 1 --max-instances 1 --timeout 300 --update-env-vars GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=PROJECT_ID,GOOGLE_CLOUD_LOCATION=global,GEMINI_MODEL=gemini-2.5-flash,FIRESTORE_ENABLED=1
 ```
 
 - `--memory 2Gi`: OCR (RapidOCR/onnxruntime) butuh memori lebih dari default 512Mi.

@@ -3,9 +3,17 @@ name = "omniaudit"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
-  "fastapi", "uvicorn[standard]", "sqlmodel", "python-multipart",
-  "pymupdf", "rapidocr-onnxruntime", "google-genai", "reportlab",
-  "jellyfish", "python-dotenv",
+  "fastapi",
+  "uvicorn[standard]",
+  "sqlmodel",
+  "python-multipart",
+  "pymupdf",
+  "rapidocr-onnxruntime",
+  "google-genai",
+  "reportlab",
+  "jellyfish",
+  "python-dotenv",
+  "google-cloud-firestore>=2.34.1",
 ]
 
 [dependency-groups]

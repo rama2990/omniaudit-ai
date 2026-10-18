@@ -21,12 +21,14 @@ export default function Cfo() {
   const [log, setLog] = useState<any[]>([])
   const [acc, setAcc] = useState<any[]>([])
   const [verify, setVerify] = useState<any>(null)
+  const [fs, setFs] = useState<any>(null)
   const [toast, setToast] = useState<{ msg: string; err?: boolean } | null>(null)
 
   const load = useCallback(() => {
     api.get('/cfo/queue').then(setQueue).catch((e) => setToast({ msg: e.message, err: true }))
     api.get('/audit?limit=60').then(setLog)
     api.get('/accuracy').then(setAcc)
+    api.get('/meta').then((m) => setFs(m.firestore))
   }, [])
   useEffect(load, [load])
 
@@ -111,6 +113,11 @@ export default function Cfo() {
               {verify.ok ? `Hash chain intact: ${verify.checked} entries verified.` :
                 `Hash chain broken at entry #${verify.broken_at}. Data was changed outside the app.`}
             </Alert>)}
+          {fs?.enabled && (
+            <Typography variant="caption" color="text.secondary" component="p" sx={{ mb: 1 }}>
+              Every entry and every ERP journal batch is also mirrored to Google Cloud Firestore
+              ({fs.written} documents written by this server{fs.failed ? `, ${fs.failed} failed` : ''}).
+            </Typography>)}
           <Paper sx={{ maxHeight: 460, overflowY: 'auto' }}>
             <Table size="small" stickyHeader>
               <TableHead><TableRow><TableCell>Time</TableCell><TableCell>Actor</TableCell><TableCell>Action</TableCell><TableCell>Object</TableCell><TableCell>Reason</TableCell></TableRow></TableHead>

@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
-from app import ar, auditlog, extractor, pipeline
+from app import ar, auditlog, extractor, firestore_sink, pipeline
 from app.audit import AP, AR, CFO, Forbidden, InvalidTransition, transition
 from app.calc import pph_rate
 from app.db import DATA, session
@@ -77,7 +77,7 @@ def need_demo_tools():
 @router.get("/meta")
 def meta():
     return {"mode": extractor.mode(), "model": os.getenv("GEMINI_MODEL", "gemini-flash-latest"),
-            "erp_fail": STATE["erp_fail"], "demo_tools": demo_tools()}
+            "erp_fail": STATE["erp_fail"], "demo_tools": demo_tools(), "firestore": firestore_sink.status()}
 
 
 class Toggle(BaseModel):

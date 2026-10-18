@@ -7,7 +7,7 @@ from decimal import Decimal
 
 from sqlmodel import Session, select
 
-from app import auditlog
+from app import auditlog, firestore_sink
 from app.allocation import Inst, allocate
 from app.journal import ar_journal, penalty_journal
 from app.matching import Receipt as R
@@ -122,6 +122,7 @@ def confirm(s: Session, r: Receipt, unit_id: int, waiver: dict | None, actor: st
     except ErpError:
         batch.erp_ref = None  # ponytail: AR tidak punya status ERP_GAGAL; batch tersimpan untuk kirim ulang manual
     s.add(batch)
+    firestore_sink.journal(batch, actor)
     r.unit_id, r.allocation, r.status, r.allocated_at, r.erp_ref = unit_id, data, "ALLOCATED", now(), batch.erp_ref
     r.waiver = {**waiver, "by": actor} if waiver else {}
     r.penalty_status = ("MENUNGGU_CFO" if pending_cfo else "WAIVED") if waiver else (
@@ -163,6 +164,7 @@ def cfo_waiver(s: Session, r: Receipt, approve: bool, actor: str, role: str, rea
         except ErpError:
             pass
         s.add(b)
+        firestore_sink.journal(b, actor)
     s.add(r)
     auditlog.record(s, actor=actor, role=role, spv_id=r.spv_id, action="CFO_WAIVER_" + ("APPROVE" if approve else "REJECT"),
                     entity="receipt", entity_id=r.id, after={"penalty_status": r.penalty_status}, reason=reason)

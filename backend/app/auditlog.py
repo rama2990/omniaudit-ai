@@ -4,6 +4,7 @@ import json
 
 from sqlmodel import Session, select
 
+from app import firestore_sink
 from app.models import AuditLog, now
 
 
@@ -22,6 +23,7 @@ def record(s: Session, *, actor: str, role: str, spv_id: str, action: str, entit
     e.hash = _digest(e.prev_hash, e)
     s.add(e)
     s.flush()
+    firestore_sink.mirror("audit_log", e.model_dump(), doc_id=e.hash)
     return e
 
 

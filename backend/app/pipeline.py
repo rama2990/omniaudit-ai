@@ -8,7 +8,7 @@ from decimal import Decimal
 
 from sqlmodel import Session, select
 
-from app import auditlog, extractor
+from app import auditlog, extractor, firestore_sink
 from app.audit import AuditContext, decide_status, needs_cfo, norm_invoice, norm_npwp, run_rules
 from app.calc import ContractTerms, PostedHistory, TerminCalc, compute_termin, pph_rate
 from app.db import session
@@ -224,6 +224,7 @@ def post(s: Session, t: Termin, actor: str, role: str) -> str:
     except ErpError as e:
         t.status, t.error = "ERP_GAGAL", str(e)
     s.add(batch)
+    firestore_sink.journal(batch, actor)
     auditlog.record(s, actor=actor, role=role, spv_id=t.spv_id, action="POST_ERP", entity="termin", entity_id=t.id,
                     after={"status": t.status, "erp_ref": t.erp_ref, "net_payable": t.calc_verified["net"]})
     return t.status
