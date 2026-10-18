@@ -1,0 +1,257 @@
+# PRODUCT REQUIREMENT DOCUMENT (PRD)
+## **OmniAudit AI: System Automated Dual-Engine Real Estate Audit & Reconciliation**
+**Dokumen Spesifikasi Bisnis & Operasional (Human-Centric Version)**
+**Versi:** 2.0-FINAL  
+**Target Pemangku Kepentingan:** Tim Finance AP, Tim Sales Admin & Collection AR, serta CFO / Eksekutif  
+
+---
+
+## BAB 1: RINGKASAN EKSEKUTIF & VISI PRODUK
+
+### 1.1 Latar Belakang & Masalah Operasional
+Pengelolaan keuangan pada industri pengembang real estate (*property developer*) skala besar melibatkan transaksi berulang yang bernilai sangat tinggi dengan tingkat kompleksitas administratif yang rawan terhadap kelalaian manusia (*human error*):
+
+1. **Pengeluaran Kontraktor (Outflow / Accounts Payable)**: 
+   * Proses verifikasi tagihan fisik (*Berita Acara Pemeriksaan* / BAP) membutuhkan pemeriksaan silang (*cross-check*) terhadap progres konstruksi lapangan, adendum kontrak legal, kalkulasi retensi warranty (5%), denda keterlambatan proyek, serta pemotongan pajak konstruksi (PPh Pasal 4 Ayat 2). 
+   * Sering terjadi *overbilling* (klaim tagihan melebihi progres fisik BAP) atau hilangnya alokasi denda keterlambatan akibat kelalaian verifikasi manual.
+2. **Penerimaan Pembeli (Inflow / Accounts Receivable)**: 
+   * Pengembang menerima puluhan ribu transaksi pembayaran setiap bulannya melalui *Virtual Account* (VA) atau transfer bank. 
+   * Dana yang menggantung tanpa identitas jelas (*unallocated receipts*) menumpuk karena perbedaan format penulisan nomor unit, nama pemilik rekening yang berbeda dari nama di PPJB, atau selisih biaya admin transfer bank.
+3. **Struktur Multi-SPV (Special Purpose Vehicles)**: 
+   * Setiap proyek perumahan atau apartemen beroperasi di bawah entitas PT/SPV terpisah untuk kepentingan pemisahan kewajiban hukum dan perpajakan. 
+   * Pengolahan transaksi lintas SPV meningkatkan risiko kesalahan alokasi jurnal akuntansi dan pembagian pajak.
+
+### 1.2 Visi & Solusi Produk
+**OmniAudit AI** hadir sebagai sistem dasbor audit otomatis berbasis kecerdasan buatan (*AI-driven dual-engine*) yang bertindak sebagai **pembantu auditor cerdas dan penjaga gawang finansial**. Sistem ini menerapkan arsitektur **Human-in-the-Loop (HITL) Audit**:
+* **Otomatisasi Agen AI**: Agen AI bekerja di latar belakang memproses dokumen BAP, mengekstraksi angka, mencocokkan kontrak, dan mengevaluasi data bank.
+* **Verifikasi Otomatis**: Jika skor kepastian AI mencapai $\ge 85\%$ dan tidak ada anomali, transaksi siap disetujui dalam sekali klik.
+* **Intervensi Manual Cerdas**: Jika ditemukan perselisihan (*dispute*) atau ketidakcocokan data, sistem secara proaktif mengunci transaksi dan menyajikan layar audit interaktif (*split-view*) agar pengguna dapat mengambil keputusan dengan cepat dan akurat.
+
+### 1.3 Indikator Kinerja Utama (KPI Bisnis)
+* **Memangkas Waktu Siklus AP (AP Processing Velocity)**: Mempercepat proses audit BAP hingga posting jurnal dari rata-rata **3–5 hari kerja menjadi kurang dari 15 menit**.
+* **Menghilangkan Kebocoran Finansial (Zero Financial Leakage)**: Mencegah 100% kasus *overbilling* kontraktor dan memastikan denda keterlambatan serta retensi 5% selalu terpotong sesuai klausul kontrak.
+* **Mengurangi Unallocated Receipts AR**: Menyelesaikan pencocokan pembayaran *unallocated* Virtual Account hingga **95% secara otomatis pada hari H (SLA Same-Day Reconciliation)**.
+
+---
+
+## BAB 2: PERSONA PENGGUNA & HAK AKSES (USER PERSONAS)
+
+Sistem menggunakan kontrol akses berbasis peran (*Role-Based Access Control* / RBAC) yang dikombinasikan dengan pemisahan entitas SPV (*SPV Data Isolation*). Pengguna hanya memiliki akses terhadap proyek/SPV yang ditugaskan kepadanya.
+
+### Matriks Peran & Hak Akses Sistem
+
+| Peran Sistem | Jabatan Operasional | Ruang Lingkup Entitas | Hak Akses & Tanggung Jawab Utama |
+| :--- | :--- | :--- | :--- |
+| **`ROLE_FIN_AP`** | Finance / AP Lead | SPV Khusus (Terbatas pada proyek yang dikelola) | • Mengunggah berkas BAP, invoice kontraktor, dan foto progres lapangan.<br>• Memeriksa hasil kalkulasi otomatis retensi (5%), PPN, PPh 4(2), dan denda.<br>• Melakukan *override* atas indikasi perselisihan (*dispute*) dengan wajib menyertakan catatan argumen audit.<br>• Menyetujui posting kelompok jurnal (*journal batch*) ke ERP. |
+| **`ROLE_SALES_AR`** | Sales Admin & Collection Lead | SPV Khusus (Terbatas pada proyek yang dikelola) | • Mengelola daftar penerimaan Virtual Account / bank yang menggantung (*unallocated*).<br>• Memeriksa rekomendasi AI untuk pencocokan unit rumah/apartemen pembeli.<br>• Menyetujui atau menolak permohonan *waiver* (penghapusan) denda keterlambatan pembeli berdasarkan aturan PPJB.<br>• Memicu pengiriman notifikasi/kuitansi konfirmasi ke WhatsApp/email pembeli. |
+| **`ROLE_CFO_EXEC`** | Chief Financial Officer / Direktur Keuangan | Global / Multi-SPV (Seluruh Proyek Conglomerate) | • Memantau dasbor eksekutif: total anomali tagihan, rasio kebocoran biaya, dan kecepatan rekonsiliasi.<br>• Mengotorisasi persetujuan khusus untuk transaksi perselisihan nominal besar (> Rp 500.000.000).<br>• Mengakses jejak audit (*audit log*) lengkap dan performa akurasi sistem AI. |
+
+---
+
+## BAB 3: ALUR KERJA PENGGUNA (END-TO-END USER JOURNEYS)
+
+### 3.1 Alur Kerja Outflow (Accounts Payable - Audit Tagihan Kontraktor)
+
+1. **Autentikasi & Konteks SPV**:
+   * Pengguna (`ROLE_FIN_AP`) masuk ke sistem menggunakan Single Sign-On (SSO) perusahaan.
+   * Pengguna memilih entitas proyek yang sedang dikelola (misal: *PT Suburban Land One*).
+
+2. **Ingesti Dokumen Batch**:
+   * Pengguna mengunggah dokumen tagihan kontraktor berupa berkas PDF multi-halaman yang berisi: Invoice Kontraktor, Dokumen BAP Progres Lapangan, Faktur Pajak, dan Laporan Foto Progres Fisik.
+   * Alternatif: Dokumen masuk secara otomatis melalui integrasi email gateway perusahaan.
+
+3. **Pemrosesan Agen AI & Telemetry Live**:
+   * Sistem secara otomatis menjalankan pemrosesan multi-agen.
+   * Pengguna melihat konsol *telemetry* di layar yang menunjukkan status pemrosesan secara *real-time*:
+     * *Parser Agent* membaca dokumen, mengenali tata letak, dan menandai koordinat teks.
+     * *Contract Agent* mencari nomor kontrak terkait di database master dan mencocokkan pasal aturan denda/retensi.
+     * *Adversarial Auditor* memeriksa apakah persen progres pada invoice melebihi persen progres BAP fisik.
+
+4. **Penanganan Hasil Pemrosesan (Disposisi Audit)**:
+   * **Jalur Hijau (Auto-Approved Ready)**: Jika skor kepastian AI $\ge 85\%$ dan tidak ditemukan perbedaan angka, tagihan masuk ke tab *"Ready for Approval"*. Pengguna cukup meninjau ringkasan dan menekan tombol **"Approve & Post"**.
+   * **Jalur Merah (Dispute Staging Queue)**: Jika ditemukan ketidaksesuaian (misal: Kontraktor mengklaim progres 80%, namun BAP fisik menyatakan baru 75%), sistem mengunci tagihan dan menandainya sebagai `DISPUTE`.
+
+5. **Peninjauan Layar Audit (Split-View Review)**:
+   * Pengguna membuka antarmuka *split-view*: Dokumen PDF asli ditampilkan di sebelah kiri dengan sorotan (*bounding box*) berwarna; Hasil ekstraksi data dan perhitungan matematis ditampilkan di sebelah kanan.
+   * Pengguna memverifikasi penyesuaian otomatis yang dibuat AI (misal: AI otomatis menurunkan nilai dasar pembayaran sesuai BAP fisik 75%).
+   * Pengguna dapat menerima saran AI atau melakukan penyesuaian nominal secara manual. Jika melakukan *override*, pengguna wajib mengetik alasan pertimbangan audit pada kolom yang disediakan.
+
+6. **Posting ke ERP**:
+   * Pengguna menekan tombol **"Post to ERP"**. Sistem menyusun jurnal akuntansi berimbang (Debit Expense & VAT Input, Kredit Retention Liability, Penalty Income, WHT PPh 4(2), & Trade AP) dan mengirimkannya langsung ke sistem ERP perusahaan (SAP / Oracle) via API.
+
+---
+
+### 3.2 Alur Kerja Inflow (Accounts Receivable - Rekonsiliasi Penerimaan Pembeli)
+
+1. **Ingesti Penerimaan Rekening Koran**:
+   * Setiap pagi, file rekening koran Virtual Account (format CSV atau MT940) diunggah oleh *Sales Admin* atau dialirkan secara *real-time* via *Webhook Bank*.
+   * Transaksi pembayaran yang tidak langsung teridentifikasi oleh sistem bank masuk ke dalam antrean **"Unallocated AR Staging"**.
+
+2. **Pencocokan Cerdas oleh AI (Fuzzy Matching)**:
+   * *Reconciliation Agent* menganalisis setiap baris transaksi menggantung dengan membandingkan tiga parameter utama:
+     * **Nomor Unit**: Mengekstrak pola kluster/blok/unit (misal: "BLOK C1/02" atau "TOWER A-12-04").
+     * **Nama Pengirim**: Membandingkan kemiripan string nama pemilik rekening dengan nama pembeli terdaftar di surat pesanan / PPJB.
+     * **Nominal Transfer**: Membandingkan jumlah uang yang masuk dengan jadwal angsuran pembeli (dengan mempertimbangkan toleransi selisih biaya admin transfer bank).
+
+3. **Verifikasi & Disposisi Sales Admin**:
+   * Pengguna (`ROLE_SALES_AR`) membuka dasbor rekonsiliasi Inflow.
+   * Sistem menyajikan daftar transaksi *unallocated* lengkap dengan **Kartu Rekomendasi Unit Pembeli** yang memiliki persentase tingkat kepastian (*Match Confidence Score*).
+   * Pengguna meninjau rekomendasi AI:
+     * Jika rekomendasi benar ($\ge 85\%$), pengguna menekan tombol **"Confirm Allocation"**.
+     * Jika terjadi keterlambatan pembayaran angsuran dari tanggal jatuh tempo PPJB, sistem otomatis menampilkan besaran denda keterlambatan angsuran ($1\%0$/hari).
+
+4. **Pengelolaan Waiver (Penghapusan Denda)**:
+   * Jika pembeli mengajukan permohonan bebas denda keterlambatan (misal: karena adanya jeda pencairan KPR Bank), pengguna dapat mencentang opsi **"Apply Penalty Waiver"**.
+   * Pengguna memilih alasan persetujuan *waiver* dari menu pilihan (misal: *Pencairan KPR Bank*, *Promosi Special Waiver*, atau *Kewenangan Eksekutif*).
+
+5. **Notifikasi Otomatis ke Pembeli**:
+   * Setelah alokasi dikonfirmasi, sistem secara otomatis memicu pengiriman notifikasi WhatsApp dan Email resmi kepada pembeli yang berisi kuitansi digital penyerahan penerimaan pembayaran.
+
+---
+
+## BAB 4: SPESIFIKASI ANTARMUKA PENGGUNA (UI/UX SCREENS)
+
+### 4.1 Layar 1: Dasbor Eksekutif & Antrean Staging Global
+
+Dasbor ini memberikan gambaran menyeluruh mengenai kesehatan arus kas dan status audit di seluruh entitas anak perusahaan (SPV).
+
+#### Komponen Visual & Tata Letak:
+* **Navigasi Atas**: Dropdown *SPV Selector* untuk beralih antara melihat proyek tunggal atau seluruh proyek holding (khusus CFO).
+* **Grid Kartu Metrik Ringkasan**:
+  * *Unallocated AR Card*: Total akumulasi dana menggantung di rekening bank yang belum teralokasi ke unit pembeli.
+  * *Pending AP Audit Card*: Total nominal rupiah tagihan BAP kontraktor yang menanti proses verifikasi.
+  * *Flagged Disputes Card*: Jumlah berkas invoice yang terdeteksi memiliki indikasi *overbilling* atau diskrepansi dokumen.
+  * *Recon Velocity Card*: Indikator kecepatan rata-rata penyelesaian satu berkas tagihan (dalam menit).
+* **Tabel Antrean Staging Transaksi**:
+  * Menampilkan seluruh transaksi yang membutuhkan perhatian pengguna, dilengkapi badge tingkat kepastian AI (Hijau = $\ge 85\%$, Kuning/Merah = $< 85\%$).
+  * Tombol aksi cepat: *Review*, *Approve*, atau *Flag Dispute*.
+
+---
+
+### 4.2 Layar 2: Verification Screen Outflow AP (Audit Split-View)
+
+Antarmuka utama bagi `ROLE_FIN_AP` untuk melakukan verifikasi mendalam terhadap dokumen tagihan kontraktor. Layar terbagi menjadi dua panel berdampingan (*split-view* 50:50).
+
+#### Komponen Utama Layar Audit Outflow:
+1. **Left Panel — Multi-Document Viewer**:
+   * Menampilkan pratinjau fisik berkas PDF (BAP, Invoice, Foto Progres).
+   * *Dynamic Bounding Box Overlay*: Kotak sorotan berwarna yang secara otomatis menunjuk lokasi teks/angka pada PDF asli yang ditarik oleh AI.
+2. **Right Panel (Top) — Panel Kontrak & Perpajakan**:
+   * Menampilkan ringkasan ketentuan hukum dari master kontrak: besaran potongan retensi (default 5%), kualifikasi SBU vendor untuk penetapan otomatis tarif PPh Pasal 4 Ayat 2 ($1.75\%$, $2.65\%$, atau $4.00\%$), dan status denda keterlambatan.
+3. **Right Panel (Middle) — Komparasi Kalkulasi Keuangan**:
+   * Tabel berdampingan membandingkan klaim awal kontraktor (*Invoiced Claim*) dengan hasil penyesuaian otomatis AI berdasarkan fakta BAP fisik (*BAP Verified*).
+   * Rincian kalkulasi menampilkan secara transparan: Nilai Progres, Potongan Retensi, Potongan Denda Keterlambatan, Nilai DPP, PPN 11%, Pemotongan PPh 4(2), hingga Nilai Bersih Pembayaran (*Net Payable*).
+4. **Right Panel (Bottom) — Telemetry Log & Tindakan Audit**:
+   * *Telemetry Console*: Tampilan catatan jejak berpikir agen AI secara langsung.
+   * *Override Input Box*: Tempat pengguna memasukkan alasan pertimbangan audit jika melakukan perubahan nilai tagihan.
+   * *Tombol Eksekusi*: Opsi untuk menolak invoice (*Reject*) atau mengonfirmasi persetujuan dan langsung mengirimkan jurnal ke sistem ERP (*Override & Post to ERP*).
+
+---
+
+### 4.3 Layar 3: Reconciliation Screen Inflow AR (Matching & Waiver)
+
+Antarmuka bagi `ROLE_SALES_AR` untuk mengidentifikasi dana menggantung (*unallocated receipts*) dan mengelola denda keterlambatan angsuran pembeli.
+
+#### Komponen Utama Layar Rekonsiliasi Inflow:
+* **Header Bank Metadata**: Menampilkan rincian baris mentah rekening koran (Tanggal, Nama Pengirim, Bank, Nominal, dan Catatan Berita Transfer).
+* **Kartu Rekomendasi AI**: Menampilkan unit rumah/apartemen hasil pencocokan AI lengkap dengan nama pembeli di PPJB dan skor persentase kepastian (*Match Confidence Score*).
+* **Grid Penilaian Denda Angsuran**: Menampilkan jumlah hari keterlambatan pembayaran dari tanggal jatuh tempo, perhitungan denda harian ($1\%0$/hari), serta toleransi biaya admin bank.
+* **Kontrol Penalty Waiver**: Checkbox untuk menyetujui penghapusan denda angsuran pembeli beserta dropdown pilihan alasan *waiver* dan kolom justifikasi operasional.
+* **Tombol Eksekusi**: Tombol *Confirm Allocation & Send Buyer Notification* untuk menyelesaikan transaksi.
+
+---
+
+## BAB 5: ATURAN BISNIS & LOGIKA FINANSIAL (BUSINESS RULES)
+
+### 5.1 Aturan Finansial Outflow (Kalkulasi Tagihan Kontraktor)
+
+Setiap tagihan BAP kontraktor yang diproses oleh sistem wajib mengikuti standar kalkulasi akuntansi dan perpajakan konstruksi Indonesia berikut:
+
+#### 1. Penentuan Nilai Dasar Pengenaan Pajak (DPP)
+Jika nilai tagihan klaim yang disetujui BAP sudah mencakup Pajak Pertambahan Nilai (PPN 11%):
+
+$$\text{DPP} = \frac{\text{Nilai Klaim BAP Fisik Disetujui}}{1,11}$$
+
+#### 2. Kalkulasi Pajak Pertambahan Nilai (PPN)
+
+$$\text{PPN} = \text{DPP} \times 11\%$$
+
+#### 3. Pemotongan Pajak Penghasilan Jasa Konstruksi (PPh Pasal 4 Ayat 2)
+Tarif PPh Final ditetapkan secara otomatis oleh sistem berdasarkan sertifikat kualifikasi Sertifikat Badan Usaha (SBU) kontraktor yang terdaftar dalam master data:
+* **Pekerjaan Pelaksanaan Konstruksi**:
+  * Kualifikasi Kecil: **1,75%**
+  * Kualifikasi Menengah / Besar (SBU Aktif): **2,65%**
+  * Tidak Memiliki Kualifikasi SBU: **4,00%**
+* **Pekerjaan Perencanaan / Pengawasan Konstruksi**:
+  * Memiliki SBU: **3,50%**
+  * Tidak Memiliki SBU: **6,00%**
+
+$$\text{PPh Final} = \text{DPP} \times \text{Tarif PPh (Berdasarkan SBU)}$$
+
+#### 4. Potongan Jaminan Retensi (Warranty Retention)
+Potongan retensi ditahan oleh pengembang untuk menjamin pemeliharaan pekerjaan hingga diterbitkannya Berita Acara Serah Terima Kedua (BAST II, biasanya 3 bulan pasca proyek selesai):
+
+$$\text{Nilai Retensi} = \text{Nilai Klaim BAP Fisik Disetujui} \times 5\% \quad (\text{Aturan Default Kontrak})$$
+
+#### 5. Denda Keterlambatan Proyek Kontraktor
+Jika tanggal penyelesaian fisik pada BAP melampaui tanggal target kesepakatan dalam kontrak baseline, kontraktor dikenakan denda keterlambatan per mil ($2\%0$ atau $0,2\%$ per hari keterlambatan) dari total nilai kontrak awal, dengan batas maksimal akumulasi denda sebesar 5% dari total nilai kontrak:
+
+$$\text{Denda Harian} = \text{Nilai Total Kontrak} \times 0,002 \times \text{Jumlah Hari Terlambat}$$
+
+$$\text{Potongan Denda} = \text{Nilai Terkecil Dari}\left(\text{Denda Harian},\; \text{Nilai Total Kontrak} \times 5\%\right)$$
+
+#### 6. Kalkulasi Nilai Bersih Pembayaran (Net Payable)
+
+$$\text{Net Payable} = (\text{Nilai Klaim BAP} - \text{Retensi} - \text{Denda Keterlambatan} - \text{Uang Muka}) + \text{PPN} - \text{PPh Final}$$
+
+---
+
+### 5.2 Matriks Risiko Adversarial Auditor (Sistem Peringatan Dini)
+
+Agen *Adversarial Auditor* bekerja secara konstan untuk menguji setiap transaksi terhadap potensi anomali atau manipulasi tagihan:
+
+| Kondisi Pemicu Anomali | Parameter yang Dievaluasi | Tingkat Keparahan | Tindakan Otomatis Sistem |
+| :--- | :--- | :--- | :--- |
+| **Klaim Overbilling Progres** | % Progres Tagihan Invoice > % Progres BAP Fisik | **TINGGI (HIGH)** | Mengunci status menjadi `DISPUTE`. Otomatis menurunkan nilai DPP pembayaran ke batas % BAP fisik. |
+| **Klaim Ganda Lintas SPV** | Nomor Invoice + NPWP Vendor sama persis ditemukan pada entitas SPV lain | **KRITIS (CRITICAL)** | Penghentian total (*Hard Stop*). Mengunci transaksi dan mengirim peringatan ke CFO atas indikasi *double-billing*. |
+| **Kelalaian Omisi Retensi** | Progres < 100% (sebelum BAST II) namun tagihan tidak mencantumkan potongan retensi | **SEDANG (MEDIUM)** | Sistem menyisipkan baris potongan retensi 5% secara otomatis. Menampilkan peringatan warna kuning pada dasbor. |
+| **Ketidakcocokan Matematika** | Nilai Total Gross Invoice $\neq$ Jumlah Rincian Komponen Line Items | **TINGGI (HIGH)** | Menandai ketidakcocokan aritmetika. Menampilkan komparasi nilai hitung sistem vs declared invoice. |
+| **Pajak Tidak Sesuai SBU** | Tarif PPh 4(2) pada faktur vendor tidak sesuai dengan status SBU di database | **SEDANG (MEDIUM)** | Otomatis merevisi persentase PPh 4(2) sesuai status kualifikasi SBU vendor yang sah. |
+
+---
+
+### 5.3 Aturan Pencocokan Inflow AR (Fuzzy Matching Pembayaran)
+
+Untuk mengidentifikasi transaksi bank menggantung (*unallocated receipts*), *Reconciliation Agent* menghitung skor kecocokan komposit (*Composite Match Score*) menggunakan formula pembobotan tiga faktor:
+
+$$\text{Match Score} = (0,45 \times S_{\text{unit}}) + (0,35 \times S_{\text{nama}}) + (0,20 \times S_{\text{nominal}})$$
+
+1. **Skor Unit ($S_{\text{unit}}$ — Bobot 45%)**:
+   * Algoritma membaca pola penulisan nomor unit menggunakan pembacaan pola teks (*Regex*).
+   * Exact Match (misal: "C1-02" == "C1/02") $\rightarrow S_{\text{unit}} = 1,0$.
+   * Kemiripan karakter tinggi $\rightarrow S_{\text{unit}} = 0,7$.
+   * Tidak Cocok $\rightarrow S_{\text{unit}} = 0,0$.
+2. **Skor Nama Pembeli ($S_{\text{nama}}$ — Bobot 35%)**:
+   * Membandingkan kemiripan string nama pada berita transfer bank dengan nama di dokumen PPJB menggunakan pembandingan jarak string (Jaro-Winkler).
+3. **Skor Nominal Transfer ($S_{\text{nominal}}$ — Bobot 20%)**:
+   * Menilai apakah jumlah uang yang masuk sesuai dengan angsuran pada jadwal pembayaran.
+   * Toleransi biaya admin bank dipasang pada batas **Rp 250.000**. Jika selisih transfer $\le \text{Rp 250.000}$, maka $S_{\text{nominal}} = 1,0$.
+
+* **Batas Keputusan**:
+  * Jika $\text{Match Score} \ge 85\%$, sistem memberikan status **"RECOMMENDED MATCH"** (Siap dikonfirmasi 1-klik).
+  * Jika $\text{Match Score} < 85\%$, sistem menetapkan status **"UNALLOCATED / MANUAL REVIEW"**.
+
+---
+
+## BAB 6: INTEGRASI & INTEGRITAS DATA (DATA INTEGRITY)
+
+### 6.1 Jejak Audit Terintegrasi (Immutable Audit Trail)
+Setiap tindakan yang terjadi di dalam sistem **OmniAudit AI** dicatat secara permanen untuk kebutuhan audit finansial tahunan:
+1. **Penyimpanan Log Aktivitas**: Mencatat siapa pengguna yang melakukan persetujuan, kapan waktu eksekusi (*timestamp* UTC), nominal awal, nominal penyesuaian, serta catatan alasan *override*.
+2. **Penilaian Kinerja Agen AI**: Sistem mencatat tingkat akurasi historis agen AI untuk evaluasi pembaharuan model pembelajaran secara berkala.
+
+### 6.2 Alur Sinkronisasi ke Sistem ERP Utama
+Setelah transaksi disetujui oleh pengguna pada antarmuka OmniAudit AI:
+* Sistem menyusun paket jurnal akuntansi yang seimbang (*balanced journal entries*).
+* Paket dikirimkan secara otomatis ke REST API sistem ERP (seperti SAP, Oracle, atau Xero).
+* Sistem ERP mengembalikan nomor resi transaksi (*ERP Batch Reference ID*), yang kemudian ditampilkan pada dasbor OmniAudit AI sebagai bukti bahwa jurnal telah sukses diposting.
