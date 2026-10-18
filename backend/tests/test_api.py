@@ -189,3 +189,15 @@ def test_demo_reset(c, monkeypatch):
     assert c.post("/api/demo/reset", json={"mode": "full_run"}, headers=H("nobody")).status_code == 401
     assert c.post("/api/demo/reset", json={"mode": "full_run"}, headers=H("dewi")).json()["mode"] == "full_run"
     assert calls == [{"full_run": True}]
+
+
+def test_npwp_pembeli_di_faktur_tidak_memicu_temuan():
+    from types import SimpleNamespace
+
+    from app.pipeline import _seller_npwp
+    t = SimpleNamespace(extraction={"page_types": {"3": "FAKTUR_PAJAK"}},
+                        pages=[{"n": 3, "words": [{"text": "23.456.789.0-120.001"}, {"text": "01.234.111.0-411.000"}]}])
+    v = SimpleNamespace(npwp="0234567890120001")
+    assert _seller_npwp(t, "01.234.111.0-411.000", v) == v.npwp  # AI salah pilih: NPWP pembeli
+    t.pages[0]["words"] = [{"text": "99.999.999.9-999.999"}]
+    assert _seller_npwp(t, "99.999.999.9-999.999", v) == "99.999.999.9-999.999"  # penjual memang lain

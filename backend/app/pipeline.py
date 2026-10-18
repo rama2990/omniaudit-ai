@@ -59,6 +59,15 @@ def calc_from(d: dict) -> TerminCalc:
     return TerminCalc(**{k: (v if k == "late_days" else D(v)) for k, v in d.items()})
 
 
+def _seller_npwp(t: Termin, read: str | None, vendor: Vendor | None) -> str | None:
+    """AI kadang mengambil NPWP pembeli dari faktur. Bila NPWP vendor tercetak di halaman faktur, pakai itu."""
+    if not read or not vendor or norm_npwp(read) == vendor.npwp:
+        return read
+    faktur_pages = {int(k) for k, v in (t.extraction.get("page_types") or {}).items() if v == "FAKTUR_PAJAK"}
+    on_page = any(norm_npwp(w["text"]) == vendor.npwp for p in t.pages if p["n"] in faktur_pages for w in p["words"])
+    return vendor.npwp if on_page else read
+
+
 def evaluate(s: Session, t: Termin) -> tuple[list, Decimal]:
     """Hitung ulang kontrak, kalkulasi dua kolom, anomali, dan kebutuhan CFO dari ekstraksi + override."""
     ext = t.extraction
@@ -108,7 +117,7 @@ def evaluate(s: Session, t: Termin) -> tuple[list, Decimal]:
         ppn_tertulis=D(p) if (p := get(t, "ppn_tertulis")) is not None else None,
         faktur_found="FAKTUR_PAJAK" in ext.get("page_types", {}).values(),
         faktur_ppn=D(f) if (f := get(t, "faktur_ppn")) is not None else None,
-        faktur_npwp=get(t, "faktur_npwp"), duplicate=dup, other_open_termin=open_other,
+        faktur_npwp=_seller_npwp(t, get(t, "faktur_npwp"), vendor), duplicate=dup, other_open_termin=open_other,
         pen_left_at_full=bool(cv and approved >= 1 and cv.pen_left > 0),
     )
     anoms = run_rules(ctx)

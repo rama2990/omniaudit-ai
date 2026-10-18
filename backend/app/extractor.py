@@ -237,13 +237,14 @@ Tugas:
    tanpa kata label), dan confidence 0..1. Jika field tidak ada di dokumen: value null, word_ids [], confidence 0.
    JANGAN mengarang nilai. JANGAN menghitung apa pun; hanya baca.
    - invoice_no, contract_no: teks apa adanya
-   - npwp: NPWP vendor di invoice (teks apa adanya)
+   - npwp: NPWP vendor/penjual di invoice (teks apa adanya), BUKAN NPWP pembeli di blok "Kepada"
    - progres_klaim: persen progres KUMULATIF yang ditagih di invoice, angka saja (mis. "60")
    - progres_bap: persen progres fisik KUMULATIF di BAP, angka saja
    - tanggal_bap: tanggal pemeriksaan BAP, format YYYY-MM-DD
    - bruto_tertulis: total tagihan termasuk PPN di invoice, angka rupiah tanpa titik (mis. "333000000")
    - ppn_tertulis: PPN di invoice; retensi_tertulis: retensi di invoice; pph_tertulis_rate: tarif PPh 4(2) di invoice (angka persen)
-   - faktur_nsfp, faktur_npwp, faktur_dpp, faktur_ppn: dari halaman Faktur Pajak
+   - faktur_nsfp, faktur_dpp, faktur_ppn: dari halaman Faktur Pajak
+   - faktur_npwp: NPWP Pengusaha Kena Pajak (PENJUAL) di Faktur Pajak, BUKAN NPWP Pembeli/Penerima Jasa
    - line_items: setiap nilai rupiah rincian pekerjaan (sebelum PPN) di invoice, TIDAK termasuk baris subtotal/total;
      potongan (mis. pengembalian uang muka, ditulis dalam kurung) diberi tanda minus, mis. "-300000000"
 3. progres_inkremental = true jika invoice menyebut progres termin ini saja (bukan kumulatif).
