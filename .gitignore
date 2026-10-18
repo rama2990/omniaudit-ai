@@ -7,3 +7,6 @@ dist/
 backend/data/
 .pytest_cache/
 backend/.venv/
+demo/video/out/
+docs/submission/template.pptx
+docs/submission/*.pptx
