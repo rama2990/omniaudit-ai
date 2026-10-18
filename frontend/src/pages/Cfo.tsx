@@ -2,7 +2,7 @@
 import { Alert, Box, Button, LinearProgress, Paper, Snackbar, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { api, dt, FIELD_LABEL, pct, rp } from '../api'
+import { api, dt, FIELD_LABEL, pct, rp, STATUS } from '../api'
 import { SEV, Section, StatusChip } from '../components/bits'
 import { C } from '../theme'
 
@@ -120,7 +120,7 @@ export default function Cfo() {
                     <TableCell>{e.actor}</TableCell>
                     <TableCell>{ACTION_LABEL[e.action] ?? e.action}</TableCell>
                     <TableCell>{e.entity === 'termin' ? `Tagihan #${e.entity_id}` : e.entity === 'receipt' ? (e.entity_id ? `Penerimaan #${e.entity_id}` : 'Rekening koran') : e.entity}
-                      {e.after?.status ? ` → ${e.after.status}` : ''}</TableCell>
+                      {e.after?.status ? `: ${STATUS[e.after.status]?.label ?? e.after.status}` : ''}</TableCell>
                     <TableCell sx={{ color: 'text.secondary' }}>{e.reason}</TableCell>
                   </TableRow>
                 ))}

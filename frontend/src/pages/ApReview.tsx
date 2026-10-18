@@ -46,7 +46,7 @@ export default function ApReview() {
   const [dlg, setDlg] = useState<{ action: string; field?: string; value?: string } | null>(null)
   const [reason, setReason] = useState('')
   const [toast, setToast] = useState<{ msg: string; err?: boolean } | null>(null)
-  const logEnd = useRef<HTMLDivElement>(null)
+  const logBox = useRef<HTMLDivElement>(null)
 
   const load = useCallback(() => api.get(`/ap/termin/${id}`).then((d) => { setT(d); setEvents(d.telemetry) }), [id])
   useEffect(() => { load().catch((e) => setToast({ msg: e.message, err: true })) }, [load])
@@ -61,7 +61,7 @@ export default function ApReview() {
     es.onerror = () => { es.close(); setTimeout(load, 1500) }
     return () => es.close()
   }, [processing, id, load])
-  useEffect(() => { logEnd.current?.scrollIntoView({ block: 'nearest' }) }, [events.length])
+  useEffect(() => { const b = logBox.current; if (b) b.scrollTop = b.scrollHeight }, [events.length])
 
   const boxes: EvidenceBox[] = useMemo(() => (t?.fields ?? []).flatMap((f: any) =>
     f.boxes.map((b: any) => ({ key: f.name, page: b.page, bbox: b.bbox, tone: f.hot ? 'bad' : 'ok',
@@ -112,8 +112,8 @@ export default function ApReview() {
       {t.erp_ref && <Alert severity="success" sx={{ mb: 2 }}>Jurnal terposting ke ERP dengan nomor batch {t.erp_ref}.</Alert>}
       {t.error && t.status !== 'POSTED' && <Alert severity="error" sx={{ mb: 2 }}>{t.error}</Alert>}
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2 }}>
-        <Paper sx={{ height: { lg: 'calc(100vh - 210px)' }, minHeight: 480, overflow: 'hidden', position: { lg: 'sticky' }, top: { lg: 88 } }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+        <Paper sx={{ height: { md: 'calc(100vh - 210px)' }, minHeight: 480, overflow: 'hidden', position: { md: 'sticky' }, top: { md: 88 } }}>
           {t.pages.length ? (
             <PdfEvidence url={`/api/ap/termin/${id}/pdf?persona=${getPersonaId()}`} pages={t.pages} boxes={boxes}
               focus={focus} onFocus={setFocus} />
@@ -272,7 +272,7 @@ export default function ApReview() {
           )}
 
           <Section title="Jejak kerja agen">
-            <Paper sx={{ p: 1.5, maxHeight: 280, overflowY: 'auto', bgcolor: '#FAFAFA' }} aria-live="polite">
+            <Paper ref={logBox} sx={{ p: 1.5, maxHeight: 280, overflowY: 'auto', bgcolor: '#FAFAFA' }} aria-live="polite">
               {events.length === 0 && <Typography variant="body2" color="text.secondary">Belum ada aktivitas.</Typography>}
               {events.map((e, i) => (
                 <Box key={i} sx={{ display: 'flex', gap: 1.5, py: 0.4, fontSize: 13 }}>
@@ -281,7 +281,6 @@ export default function ApReview() {
                 </Box>
               ))}
               {processing && <LinearProgress sx={{ mt: 1 }} />}
-              <div ref={logEnd} />
             </Paper>
           </Section>
 

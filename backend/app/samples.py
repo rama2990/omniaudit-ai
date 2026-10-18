@@ -59,7 +59,7 @@ def _rows(c: Canvas, y: float, rows: list[tuple[str, str]], x2=230, size=11) -> 
 
 def build(pkg: Package, path: Path, raster: bool = False) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
-    c = Canvas(str(path), pagesize=A4)
+    c = Canvas(str(path), pagesize=A4, invariant=1)  # byte identik setiap seed
     w, h = A4
 
     # 1. Invoice

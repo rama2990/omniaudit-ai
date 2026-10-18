@@ -90,7 +90,7 @@ export default function ArReconcile() {
         <Box>
           <Section title={done ? 'Unit tujuan' : 'Rekomendasi unit'}>
             {r.candidates.length === 0 && <Typography color="text.secondary">Tidak ada kandidat. Cari unit secara manual.</Typography>}
-            {r.candidates.map((c: any) => {
+            {r.candidates.filter((c: any) => !done || c.unit_id === r.unit_id).map((c: any) => {
               const sel = unitId === c.unit_id
               return (
                 <Paper key={c.unit_id} onClick={() => !done && pick(c.unit_id)} role="button" tabIndex={0}

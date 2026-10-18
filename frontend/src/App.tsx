@@ -23,7 +23,7 @@ export default function App() {
 
   return (
     <Box sx={{ minHeight: '100vh' }}>
-      <AppBar position="sticky" color="inherit">
+      <AppBar position="sticky" color="inherit" elevation={0}>
         <Toolbar sx={{ gap: 2, flexWrap: 'wrap', py: 1 }}>
           <Box component={Link} to="/" sx={{ display: 'flex', alignItems: 'center', gap: 1, color: C.ink, textDecoration: 'none' }}>
             <FactCheckOutlined sx={{ color: C.blue }} />

@@ -44,3 +44,36 @@ def test_grounding_menolak_nilai_karangan(pages):
     assert ext["fields"]["progres_bap"]["confidence"] == 0
     assert value(ext, "progres_bap") is None
     assert confidence(ext) == 0
+
+
+def test_jalur_gemini_dengan_client_tiruan(pages, monkeypatch):
+    """Pemetaan respons Gemini -> format internal, tanpa jaringan."""
+    from google import genai
+
+    from app import extractor as ex
+
+    truth = ex._fake(pages)
+    out = ex.ExtractionOut(
+        page_types=[ex.PageTypeOut(page=k, type=v) for k, v in truth["page_types"].items()],
+        line_items=[ex.FieldOut(**f) for f in truth["line_items"]], progres_inkremental=False,
+        **{n: ex.FieldOut(**truth["fields"][n]) for n in ex.WAJIB + ex.OPSIONAL})
+
+    class Resp:
+        parsed = out
+        text = out.model_dump_json()
+
+    class Models:
+        def generate_content(self, **kw):
+            assert kw["config"].response_schema is ex.ExtractionOut
+            return Resp()
+
+    class FakeClient:
+        def __init__(self, **kw):
+            self.models = Models()
+
+    monkeypatch.setattr(genai, "Client", FakeClient)
+    monkeypatch.setenv("GEMINI_MODE", "gemini")
+    ext = ex.extract(pages)
+    assert ext["mode"] == "gemini"
+    assert value(ext, "progres_bap") == 55 and value(ext, "bruto_tertulis") == 333_000_000
+    assert confidence(ext) >= D("0.85")

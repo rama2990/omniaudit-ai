@@ -3,6 +3,8 @@ import re
 from dataclasses import dataclass
 from decimal import Decimal
 
+from app.money import fmt_rp as _rp
+
 AP, AR, CFO = "ROLE_FIN_AP", "ROLE_SALES_AR", "ROLE_CFO_EXEC"
 CFO_THRESHOLD = Decimal(500_000_000)
 CONFIDENCE_MIN = Decimal("0.85")
@@ -38,6 +40,11 @@ class AuditContext:
     pen_left_at_full: bool = False
 
 
+def pct_id(x: Decimal) -> str:
+    """0.8 -> '80%', 0.0175 -> '1,75%'."""
+    return f"{x * 100:.2f}".rstrip("0").rstrip(".").replace(".", ",") + "%"
+
+
 def norm_invoice(s: str) -> str:
     return re.sub(r"[^A-Z0-9]", "", (s or "").upper())
 
@@ -58,20 +65,20 @@ def run_rules(c: AuditContext) -> list[Anomaly]:
         add("KLAIM_GANDA", "HIGH", "Nomor invoice + NPWP yang sama sudah pernah diajukan di SPV ini.")
     k, b = c.progres_klaim, c.progres_bap
     if k is not None and b is not None and k > b:
-        add("OVERBILLING", "HIGH", f"Progres Klaim {k:.2%} melebihi Progres BAP {b:.2%}. Dihitung ulang memakai Progres BAP.")
+        add("OVERBILLING", "HIGH", f"Progres Klaim {pct_id(k)} melebihi Progres BAP {pct_id(b)}. Dihitung ulang memakai Progres BAP.")
     if c.retensi_tertulis is None or c.retensi_tertulis == 0:
         add("OMISI_RETENSI", "MEDIUM", "Invoice tidak mencantumkan Retensi. Retensi tetap dipotong sesuai Kontrak.")
     if c.line_items_sum is not None and c.ppn_tertulis is not None and c.bruto_tertulis is not None \
             and abs(c.line_items_sum + c.ppn_tertulis - c.bruto_tertulis) > 1:
         add("MATEMATIKA", "HIGH", f"Jumlah line item + PPN ({c.line_items_sum + c.ppn_tertulis:,.0f}) "
-                                  f"tidak sama dengan Bruto Tertulis ({c.bruto_tertulis:,.0f}).")
+                                  f"tidak sama dengan Bruto Tertulis ({_rp(c.bruto_tertulis)}).")
     if c.bruto_tertulis is not None and c.bruto_klaim_calc is not None \
             and abs(c.bruto_tertulis - c.bruto_klaim_calc) > 1000:
-        add("NILAI_TIDAK_SESUAI_PROGRES", "HIGH", f"Bruto Tertulis {c.bruto_tertulis:,.0f} tidak sesuai nilai "
-                                                  f"Progres Klaim ({c.bruto_klaim_calc:,.0f}).")
+        add("NILAI_TIDAK_SESUAI_PROGRES", "HIGH", f"Bruto Tertulis {_rp(c.bruto_tertulis)} tidak sesuai nilai "
+                                                  f"Progres Klaim ({_rp(c.bruto_klaim_calc)}).")
     if c.pph_tertulis_rate is not None and c.pph_master is not None and c.pph_tertulis_rate != c.pph_master:
-        add("PAJAK_SBU", "MEDIUM", f"Tarif PPh di invoice {c.pph_tertulis_rate:.2%} tidak sesuai SBU Vendor "
-                                   f"({c.pph_master:.2%}). Dipakai tarif master.")
+        add("PAJAK_SBU", "MEDIUM", f"Tarif PPh di invoice {pct_id(c.pph_tertulis_rate)} tidak sesuai SBU Vendor "
+                                   f"({pct_id(c.pph_master)}). Dipakai tarif master.")
     if not c.faktur_found:
         add("FAKTUR_PAJAK", "MEDIUM", "Faktur Pajak tidak ditemukan. PPN Masukan belum dapat dikreditkan.")
     else:
