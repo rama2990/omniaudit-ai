@@ -82,6 +82,42 @@ Semua file demo ada di folder `demo/`. Persona dan SPV dipilih dari dropdown di 
 
 **Simulasi ERP gagal:** klik chip mode di kanan atas.
 
+## Simulasi full run
+
+Folder `demo/full-run/` berisi satu minggu kerja fiktif di tiga SPV:
+- **12 dokumen tagihan** dalam tiga gaya vendor: kop korporat dengan materai, CV sederhana, dan kontraktor menengah. Setiap dokumen berisi invoice, BAP bertabel bobot, faktur pajak format Coretax, dan foto progres. Salah satunya hasil scan.
+- **3 rekening koran.**
+
+Skenarionya mencakup:
+- overbilling dan kasus CFO,
+- klaim ganda lintas SPV,
+- invoice ditolak lalu direvisi,
+- progres inkremental,
+- nomor kontrak salah tulis,
+- denda yang menelan termin,
+- ERP gagal,
+- waiver eksekutif, bayar sebagian, lebih bayar, dan pengirim pasangan pembeli.
+
+Panduan langkah demi langkah beserta hasil yang diharapkan ada di `demo/full-run/SKENARIO.md`.
+
+**Manual di aplikasi:** hentikan server, jalankan perintah di bawah, nyalakan server lagi, lalu ikuti SKENARIO.md.
+
+```bash
+cd backend && uv run python -m app.seed --full-run
+```
+
+**Otomatis:** simulator menjalankan semua langkah dan mencocokkan hasilnya.
+
+```bash
+cd backend && uv run python scripts/full_run.py --offline
+```
+
+Pilihan lain:
+- Tanpa `--offline`, simulator memakai Gemini. Satu run butuh 12 request, sedangkan kuota gratis sekitar 20 request per hari per model.
+- Tambahkan `--live` supaya hasilnya masuk ke database server dan terlihat di aplikasi.
+
+Kalau Gemini gagal (kuota habis atau jaringan putus), dokumen otomatis dibaca dengan pola teks lokal, dan aplikasi menampilkan pemberitahuan. Matikan perilaku ini dengan `GEMINI_FALLBACK=0`.
+
 ## Struktur
 
 ```

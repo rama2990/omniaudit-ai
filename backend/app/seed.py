@@ -112,7 +112,8 @@ def sample_packages(contracts: dict[str, Contract], vendors: list[Vendor]) -> di
     }
 
 
-def seed(fast: bool = False):
+def seed(fast: bool = False, full_run: bool = False):
+    """fast: tanpa PDF scan & pra-proses (tes). full_run: data master saja, untuk demo/full-run/SKENARIO.md."""
     os.environ.setdefault("OMNI_TELEMETRY_DELAY", "0")
     init_db(reset=True)
     for sub in ("uploads", "kuitansi"):
@@ -195,8 +196,10 @@ def seed(fast: bool = False):
         for spv, path in csvs["preload"].items():
             ar.ingest_csv(s, spv, path.read_text(encoding="utf-8"), "andi" if spv != "GCT3" else "sari", AR)
         s.commit()
+        from app import fullrun
+        fullrun.build(s, units_by_spv, DEMO, scan=not fast)
 
-    if not fast:  # pra-proses PDF 03..07 agar antrean berisi; 01 & 02 untuk demo live
+    if not fast and not full_run:  # pra-proses PDF 03..07 agar antrean berisi; 01 & 02 untuk demo live
         from app.pipeline import process_termin
         for fname, (pkg, key, _) in packages.items():
             if fname.startswith(("01", "02")):
@@ -319,4 +322,4 @@ def _write(path: Path, head, rows):
 
 
 if __name__ == "__main__":
-    seed(fast="--fast" in sys.argv)
+    seed(fast="--fast" in sys.argv, full_run="--full-run" in sys.argv)

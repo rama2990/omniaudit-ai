@@ -42,9 +42,10 @@ def parse(kind: str, s: str | None):
     s = str(s).strip()
     try:
         if kind == "money":
-            d = re.sub(r",\d{1,2}$", "", s)  # buang sen ",00"
+            neg = s.startswith(("-", "(")) or s.startswith("Rp-")  # potongan: "(Rp300.000.000)" / "-300000000"
+            d = re.sub(r",\d{1,2}\)?$", "", s)  # buang sen ",00"
             d = re.sub(r"\D", "", d)
-            return int(d) if d else None
+            return (-int(d) if neg else int(d)) if d else None
         if kind == "pct":
             m = re.search(r"\d+(?:[.,]\d+)?", s)
             return Decimal(m.group().replace(",", ".")) if m else None
@@ -57,7 +58,7 @@ def parse(kind: str, s: str | None):
             m = re.search(r"(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})", s)
             if m:
                 return date(int(m[3]), int(m[2]), int(m[1]))
-            m = re.search(r"(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})", s)
+            m = re.search(r"(\d{1,2})\s*([A-Za-z]+)\s*(\d{4})", s)  # OCR scan bisa menempel: "14Oktober2026"
             if m and m[2].upper() in BULAN:
                 return date(int(m[3]), BULAN[m[2].upper()], int(m[1]))
             return None
@@ -76,7 +77,15 @@ def ground(ext: dict, pages: list[dict]) -> dict:
             f["grounded"] = False
             return
         txt = " ".join(words[i]["text"] for i in f.get("word_ids", []) if i in words)
-        ok = bool(txt) and parse(kind, txt) == parse(kind, f["value"]) and parse(kind, f["value"]) is not None
+        a, b = parse(kind, txt), parse(kind, f["value"])
+        if kind == "money" and a is not None and b is not None:
+            a, b = abs(a), abs(b)  # tanda potongan bisa ada di kurung, bukan di kata yang dirujuk
+        ok = bool(txt) and b is not None and a == b
+        if not ok and b is not None and kind in ("text", "npwp", "money"):
+            # OCR scan bisa menempelkan label dan nilai dalam satu kata ("Pajak:0400...")
+            hay = re.sub(r"\D", "", txt) if kind != "text" else re.sub(r"[^A-Z0-9]", "", txt.upper())
+            needle = str(b) if kind == "money" else b
+            ok = len(needle) >= 4 and needle in hay
         f["grounded"] = ok
         if not ok:
             f["confidence"] = 0.0
@@ -94,9 +103,21 @@ def confidence(ext: dict) -> Decimal:
 
 # ---------- fake extractor ----------
 
+def _reading_order(words: list[dict]) -> list[dict]:
+    """Susun kata per baris visual (pusat vertikal berdekatan), atas ke bawah, kiri ke kanan."""
+    lines: list[list[dict]] = []
+    for w in sorted(words, key=lambda w: (w["bbox"][1] + w["bbox"][3]) / 2):
+        cy, h = (w["bbox"][1] + w["bbox"][3]) / 2, w["bbox"][3] - w["bbox"][1]
+        if lines and abs(lines[-1][0]["_cy"] - cy) < max(2.0, 0.35 * h):
+            lines[-1].append({**w, "_cy": lines[-1][0]["_cy"]})
+        else:
+            lines.append([{**w, "_cy": cy}])
+    return [w for line in lines for w in sorted(line, key=lambda w: w["bbox"][0])]
+
+
 def _page_text(page):
     spans, parts, pos = [], [], 0
-    for w in page["words"]:
+    for w in _reading_order(page["words"]):
         spans.append((pos, pos + len(w["text"]), w))
         parts.append(w["text"])
         pos += len(w["text"]) + 1
@@ -115,35 +136,34 @@ def _find(page, pattern, flags=re.I):
 
 
 def _classify(page) -> str:
-    t = "".join(w["text"] for w in page["words"][:12]).upper()  # OCR scan kadang menempelkan kata
-    for key, typ in [("BERITAACARA", "BAP"), ("FAKTURPAJAK", "FAKTUR_PAJAK"), ("FOTO", "FOTO_PROGRES"),
-                     ("INVOICE", "INVOICE")]:
-        if key in t:
-            return typ
-    return "LAIN"
+    t = "".join(w["text"] for w in page["words"]).upper()  # tanpa spasi: OCR scan kadang menempelkan kata
+    keys = [("BERITAACARA", "BAP"), ("FAKTURPAJAK", "FAKTUR_PAJAK"), ("LAPORANFOTO", "FOTO_PROGRES"),
+            ("FOTOPROGRES", "FOTO_PROGRES"), ("INVOICE", "INVOICE")]
+    hits = [(t.find(k), typ) for k, typ in keys if k in t]
+    return min(hits)[1] if hits else "LAIN"  # judul halaman = kata kunci paling awal
 
 
 MONEY = r"Rp\s?[\d.]+(?:,\d{2})?"
 PATTERNS = {
     "INVOICE": {
-        "invoice_no": r"No\.?\s*Invoice:?\s+(?P<v>\S+)",
-        "npwp": r"NPWP:?\s+(?P<v>[\d.\-]{15,22})",
-        "contract_no": r"No\.?\s*Kontrak:?\s+(?P<v>\S+)",
-        "progres_klaim": r"Progres\s*Kumulatif\s*Ditagih:?\s*(?P<v>\d+(?:[.,]\d+)?\s?%)",
-        "bruto_tertulis": rf"Total\s*Tagihan:?\s*(?P<v>{MONEY})",
-        "ppn_tertulis": rf"PPN\s*11%:?\s*(?P<v>{MONEY})",
-        "retensi_tertulis": rf"Retensi[^:]*:\s*(?P<v>{MONEY})",
-        "pph_tertulis_rate": r"PPh\s*4\(2\)\s*(?P<v>\d+(?:,\d+)?%?)",
+        "invoice_no": r"(?:No\.?|Nomor)\s*(?:Invoice|Tagihan)\s*:?\s*(?P<v>[^\s:]\S*)",
+        "npwp": r"NPWP\s*:?\s*(?P<v>[\d.\-]{15,22})",
+        "contract_no": r"(?:No\.?|Nomor)\s*(?:Kontrak|SPK)(?:\s*/\s*SPK)?\s*:?\s*(?P<v>[^\s:]\S*)",
+        "progres_klaim": r"Progres\s*Kumulatif[^:%]*:\s*(?P<v>\d+(?:[.,]\d+)?\s?%)",
+        "bruto_tertulis": rf"(?:(?:Total|Jumlah)\s*Tagihan|Grand\s*Total)[^:]*:\s*(?P<v>{MONEY})",
+        "ppn_tertulis": rf"PPN\s*\(?\s*11\s?%\s*\)?\s*:?\s*(?P<v>{MONEY})",
+        "retensi_tertulis": rf"Retensi[^:]*:\s*\(?\s*(?P<v>{MONEY})",
+        "pph_tertulis_rate": r"PPh\s*(?:Pasal\s*|Ps\.\s*)?4\s*(?:ayat\s*)?\(2\)\s*(?P<v>\d+(?:,\d+)?\s?%?)",
     },
     "BAP": {
-        "progres_bap": r"Progres\s*Fisik\s*Kumulatif:?\s*(?P<v>\d+(?:[.,]\d+)?\s?%)",
-        "tanggal_bap": r"Tanggal\s*Pemeriksaan:?\s*(?P<v>\d{2}-\d{2}-\d{4})",
+        "progres_bap": r"Progres\s*Fisik\s*Kumulatif[^:%]*:\s*(?P<v>\d+(?:[.,]\d+)?\s?%)",
+        "tanggal_bap": r"Tanggal\s*Pemeriksaan\s*:?\s*(?P<v>\d{1,2}(?:[-/.]\d{1,2}[-/.]|\s*[A-Za-z]+\s*)\d{4})",
     },
     "FAKTUR_PAJAK": {
-        "faktur_nsfp": r"Nomor\s*Seri\s*Faktur:?\s*(?P<v>[\d.\-]+)",
-        "faktur_npwp": r"NPWP\s*Penjual:?\s*(?P<v>[\d.\-]{15,22})",
-        "faktur_dpp": rf"Dasar\s*Pengenaan\s*Pajak:?\s*(?P<v>{MONEY})",
-        "faktur_ppn": rf"(?<![\w])PPN:\s*(?P<v>{MONEY})",
+        "faktur_nsfp": r"Nomor\s*Seri\s*Faktur(?:\s*Pajak)?\s*:?\s*(?P<v>\d[\d.\-]+)",
+        "faktur_npwp": r"NPWP\s*(?:Penjual)?\s*:?\s*(?P<v>[\d.\-]{15,22})",
+        "faktur_dpp": rf"Dasar\s*Pengenaan\s*Pajak[^:]*:\s*(?P<v>{MONEY})",
+        "faktur_ppn": rf"(?:Total\s*PPN[^:]*|(?<![\w])PPN):\s*(?P<v>{MONEY})",
     },
 }
 
@@ -161,10 +181,15 @@ def _fake(pages: list[dict]) -> dict:
             start = re.search(r"Jumlah", text)
             end = re.search(r"PPN\s*11%", text)
             if start and end:
+                prev = start.end()
                 for m in re.finditer(MONEY, text[start.end():end.start()]):
                     a, b = m.start() + start.end(), m.end() + start.end()
+                    label, prev = text[prev:a], b
+                    if re.search(r"total|jumlah|dpp", label, re.I):  # baris subtotal, bukan rincian
+                        continue
                     ws = [w for s, e, w in spans if s < b and e > a]
-                    items.append({"value": m.group(), "word_ids": [w["id"] for w in ws],
+                    sign = "-" if text[a - 1:a] == "(" else ""
+                    items.append({"value": sign + m.group(), "word_ids": [w["id"] for w in ws],
                                   "confidence": round(min(w.get("conf", 1.0) for w in ws) * 0.97, 2)})
     return {"mode": "fake", "model": "pola-teks", "page_types": types, "fields": fields, "line_items": items,
             "inkremental": False}
@@ -219,7 +244,8 @@ Tugas:
    - bruto_tertulis: total tagihan termasuk PPN di invoice, angka rupiah tanpa titik (mis. "333000000")
    - ppn_tertulis: PPN di invoice; retensi_tertulis: retensi di invoice; pph_tertulis_rate: tarif PPh 4(2) di invoice (angka persen)
    - faktur_nsfp, faktur_npwp, faktur_dpp, faktur_ppn: dari halaman Faktur Pajak
-   - line_items: setiap nilai rupiah rincian pekerjaan (sebelum PPN) di invoice
+   - line_items: setiap nilai rupiah rincian pekerjaan (sebelum PPN) di invoice, TIDAK termasuk baris subtotal/total;
+     potongan (mis. pengembalian uang muka, ditulis dalam kurung) diberi tanda minus, mis. "-300000000"
 3. progres_inkremental = true jika invoice menyebut progres termin ini saja (bukan kumulatif).
 
 Dokumen:
@@ -258,7 +284,9 @@ def _gemini(pages: list[dict]) -> dict:
                     "line_items": data["line_items"], "inkremental": data["progres_inkremental"]}
         except Exception as e:  # noqa: BLE001
             last_err = e
-    raise RuntimeError(f"Gemini gagal: {last_err}")
+            if "RESOURCE_EXHAUSTED" in str(e) or "429" in str(e):
+                raise RuntimeError("Kuota Gemini habis (429). Coba lagi nanti, ganti GEMINI_MODEL, atau pakai key berbayar.")
+    raise RuntimeError(f"Gemini gagal: {str(last_err)[:300]}")
 
 
 def extract(pages: list[dict]) -> dict:
@@ -267,10 +295,18 @@ def extract(pages: list[dict]) -> dict:
     return ground(ext, pages)
 
 
+def extract_offline(pages: list[dict], reason: str) -> dict:
+    """Cadangan saat Gemini tidak tersedia (kuota/jaringan): pola teks lokal, alasan dicatat."""
+    ext = _fake(pages)
+    ext["fallback_reason"] = reason
+    return ground(ext, pages)
+
+
 def value(ext: dict, name: str):
     """Nilai field ter-parse; field ber-confidence 0 dianggap tidak ada."""
     f = ext["fields"].get(name) or {}
-    return parse(KIND[name], f.get("value")) if f.get("grounded") else None
+    v = parse(KIND[name], f.get("value")) if f.get("grounded") else None
+    return abs(v) if KIND[name] == "money" and v is not None else v
 
 
 def dumps(ext: dict) -> str:
