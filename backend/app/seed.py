@@ -209,6 +209,26 @@ def seed(fast: bool = False):
     print(f"Seed selesai. Database: {DATA / 'omniaudit.db'}. File demo: {DEMO}")
 
 
+def regemini():
+    """Seed di-bake saat build image tanpa GEMINI_API_KEY → item antrean terbaca pola teks lokal.
+    Saat start dengan Gemini aktif, baca ulang item itu dengan Gemini (OCR sudah tersimpan, jadi cepat)."""
+    from app import extractor
+    from app.pipeline import FINAL, process_termin
+    if extractor.mode() != "gemini":
+        return
+    with session() as s:
+        todo = [(t.id, t.pages) for t in s.exec(select(Termin)).all()
+                if t.pages and t.extraction.get("mode") == "fake" and t.status not in FINAL and not t.overrides]
+    # ponytail: tanpa lock; aksi user pada item yang sedang dibaca ulang (~1 menit pertama) bisa tertimpa
+    for tid, pages in todo:
+        try:
+            ext = extractor.extract(pages)
+        except Exception as e:  # noqa: BLE001 - Gemini gagal → biarkan hasil pola teks lokal
+            print(f"regemini termin {tid}: {e}")
+            continue
+        process_termin(tid, ext)
+
+
 def new_upload(spv_id: str, src: Path, actor: str) -> int:
     with session() as s:
         t = Termin(spv_id=spv_id, filename=src.name, uploaded_by=actor)

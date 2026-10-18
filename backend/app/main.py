@@ -1,3 +1,4 @@
+import threading
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -20,6 +21,8 @@ async def lifespan(_app):
     if empty:  # start pertama: isi data seed otomatis
         from app.seed import seed
         seed()
+    from app.seed import regemini
+    threading.Thread(target=regemini, daemon=True).start()
     yield
 
 

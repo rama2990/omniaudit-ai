@@ -5,6 +5,7 @@ Aplikasi jalan sebagai **satu container** (lihat `Dockerfile`): FastAPI menyajik
 Catatan penting soal data:
 - Database SQLite ada di `/tmp/data` (`OMNI_DATA`), yaitu memori instance. Data **hilang** setiap kali instance baru menyala.
 - Seed (termasuk OCR PDF hasil scan) sudah dijalankan saat **build image**, jadi cold start cepat dan setiap instance baru mulai dari data demo yang sama.
+- Saat build belum ada `GEMINI_API_KEY`, jadi 5 item antrean AP awalnya terbaca pola teks lokal. Begitu instance menyala dengan key, item itu dibaca ulang dengan Gemini di background (sekitar 1 menit, 5 panggilan Gemini per instance baru; OCR tidak diulang). Kalau Gemini gagal, hasil pola teks lokal tetap dipakai. Hindari mengubah item antrean di menit pertama setelah deploy.
 - Pakai `--min-instances=1 --max-instances=1` supaya semua request masuk ke satu instance dan data demo tetap konsisten selama presentasi. Konsekuensinya: 1 instance selalu menyala dan ditagih walau tidak ada trafik.
 
 ## 1. Persiapan (sekali saja)

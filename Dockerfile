@@ -29,7 +29,8 @@ COPY demo/ /app/demo/
 COPY --from=web /web/dist /app/frontend/dist
 
 # Seed (termasuk OCR PDF scan) dijalankan saat build, bukan saat cold start.
-# Tanpa GEMINI_API_KEY saat build -> ekstraksi pola teks lokal.
+# Tanpa GEMINI_API_KEY saat build -> ekstraksi pola teks lokal; saat start dengan key,
+# item antrean dibaca ulang dengan Gemini di background (app.seed.regemini).
 # Path di DB absolut (/tmp/data/...), jadi hasil seed disimpan lalu disalin balik ke /tmp/data saat start.
 RUN python -m app.seed && mv /tmp/data /app/seed-data
 

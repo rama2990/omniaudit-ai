@@ -118,7 +118,7 @@ def evaluate(s: Session, t: Termin) -> tuple[list, Decimal]:
 
 # ---------- proses dokumen ----------
 
-def process_termin(tid: int):
+def process_termin(tid: int, ext: dict | None = None):
     with session() as s:
         t = s.get(Termin, tid)
         TELEMETRY[tid] = []
@@ -133,7 +133,7 @@ def process_termin(tid: int):
             m = extractor.mode()
             publish(tid, "Parser Agent", f"Mengirim teks OCR ke Gemini ({os.getenv('GEMINI_MODEL', 'gemini-flash-latest')})…"
                     if m == "gemini" else "Mode offline: ekstraksi dengan pola teks lokal")
-            t.extraction = extractor.extract(t.pages)
+            t.extraction = ext or extractor.extract(t.pages)
             types = ", ".join(f"h{k}={v}" for k, v in sorted(t.extraction["page_types"].items()))
             publish(tid, "Parser Agent", f"Klasifikasi halaman: {types}")
             for n in extractor.WAJIB:
