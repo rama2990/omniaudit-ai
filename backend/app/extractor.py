@@ -285,8 +285,8 @@ def _gemini(pages: list[dict]) -> dict:
         except Exception as e:  # noqa: BLE001
             last_err = e
             if "RESOURCE_EXHAUSTED" in str(e) or "429" in str(e):
-                raise RuntimeError("Kuota Gemini habis (429). Coba lagi nanti, ganti GEMINI_MODEL, atau pakai key berbayar.")
-    raise RuntimeError(f"Gemini gagal: {str(last_err)[:300]}")
+                raise RuntimeError("Gemini quota exhausted (429). Try again later, change GEMINI_MODEL, or use a paid key.")
+    raise RuntimeError(f"Gemini failed: {str(last_err)[:300]}")
 
 
 def extract(pages: list[dict]) -> dict:

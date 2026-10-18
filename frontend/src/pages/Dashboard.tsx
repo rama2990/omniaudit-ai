@@ -25,7 +25,7 @@ function Metric({ label, value, note, tone }: { label: string; value: string; no
   return (
     <Box sx={{ flex: '1 1 180px', px: 2.5, py: 2 }}>
       <Typography variant="body2" color="text.secondary">{label}</Typography>
-      <Typography sx={{ fontSize: 26, fontWeight: 500, color: tone ?? C.ink, fontVariantNumeric: 'tabular-nums', mt: 0.5 }}>
+      <Typography sx={{ fontSize: { xs: 22, lg: 24 }, fontWeight: 500, whiteSpace: 'nowrap', color: tone ?? C.ink, fontVariantNumeric: 'tabular-nums', mt: 0.5 }}>
         {value}
       </Typography>
       {note && <Typography variant="caption" color="text.secondary">{note}</Typography>}
@@ -85,7 +85,7 @@ export default function Dashboard() {
     setBusy(true)
     try {
       const s = await api.upload('/ar/upload', fd)
-      setToast({ msg: `${s.rows} penerimaan dibaca: ${s.auto} otomatis teralokasi lewat VA, ${s.recommended} siap dikonfirmasi, ${s.manual} perlu tinjau manual${s.duplicates ? `, ${s.duplicates} kemungkinan duplikat` : ''}.` })
+      setToast({ msg: `${s.rows} payments read: ${s.auto} allocated automatically by VA, ${s.recommended} ready to confirm, ${s.manual} need manual review${s.duplicates ? `, ${s.duplicates} possible duplicates` : ''}.` })
       load()
     } catch (e) {
       setToast({ msg: (e as Error).message, err: true })
@@ -98,11 +98,11 @@ export default function Dashboard() {
     try {
       if (i.kind === 'AP') {
         const t = await api.post(`/ap/termin/${i.id}/action`, { action: 'post' })
-        setToast({ msg: t.status === 'POSTED' ? `Terposting ke ERP: ${t.erp_ref}` : `Status: ${t.status}` })
+        setToast({ msg: t.status === 'POSTED' ? `Posted to ERP. Batch number: ${t.erp_ref}` : `Status: ${t.status}` })
       } else {
         const d = await api.get(`/ar/receipt/${i.id}`)
         await api.post(`/ar/receipt/${i.id}/confirm`, { unit_id: d.selected_unit.id })
-        setToast({ msg: `Dialokasikan ke unit ${d.selected_unit.code} dan notifikasi dikirim ke pembeli.` })
+        setToast({ msg: `Allocated to unit ${d.selected_unit.code} and buyer notified.` })
       }
       load()
     } catch (e) {
@@ -126,19 +126,19 @@ export default function Dashboard() {
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 2, mb: 2, flexWrap: 'wrap' }}>
         <Box sx={{ flex: 1, minWidth: 260 }}>
-          <Typography variant="h1">Selamat datang, {persona.name.split(' ')[0]}</Typography>
+          <Typography variant="h1">Welcome, {persona.name.split(' ')[0]}</Typography>
           <Typography color="text.secondary">
-            {spv === 'ALL' ? 'Semua SPV' : persona.spv_names[spv]}: transaksi yang menunggu keputusan Anda ada di bawah.
+            {spv === 'ALL' ? 'All SPVs' : persona.spv_names[spv]}: transactions waiting for your decision.
           </Typography>
         </Box>
         {role === 'ROLE_FIN_AP' && (
           <Button variant="contained" startIcon={<UploadFileOutlined />} disabled={busy} onClick={() => apFile.current?.click()}>
-            Unggah dokumen tagihan
+            Upload bill
           </Button>
         )}
         {role === 'ROLE_SALES_AR' && (
           <Button variant="contained" startIcon={<UploadFileOutlined />} disabled={busy} onClick={() => arFile.current?.click()}>
-            Unggah rekening koran
+            Upload bank statement
           </Button>
         )}
         <input ref={apFile} type="file" accept="application/pdf" hidden
@@ -149,35 +149,35 @@ export default function Dashboard() {
 
       {m && (
         <Paper sx={{ display: 'flex', flexWrap: 'wrap', mb: 3, '& > div + div': { borderLeft: { md: `1px solid ${C.outline}` } } }}>
-          <Metric label="Dana pembeli belum teralokasi" value={rp(m.unallocated_ar)} note={`${m.unallocated_count} penerimaan`} />
-          <Metric label="Tagihan kontraktor menunggu audit" value={rp(m.pending_ap)} note={`${m.pending_ap_count} termin, nilai terverifikasi`} />
-          <Metric label="Dispute & Hard Stop" value={String(m.flagged)} tone={m.flagged ? C.bad : C.ink} note="termin terkunci" />
-          <Metric label="Rata-rata waktu audit" value={m.velocity_min !== null ? `${m.velocity_min.toString().replace('.', ',')} mnt` : '–'} note="unggah sampai terposting, 30 hari" />
-          <Metric label="Kebocoran dicegah" value={rp(m.leakage_prevented)} tone={C.ok} note="klaim dikurangi nilai terverifikasi" />
+          <Metric label="Unallocated buyer payments" value={rp(m.unallocated_ar)} note={`${m.unallocated_count} payments`} />
+          <Metric label="Contractor bills awaiting audit" value={rp(m.pending_ap)} note={`${m.pending_ap_count} bills, verified value`} />
+          <Metric label="Disputes & hard stops" value={String(m.flagged)} tone={m.flagged ? C.bad : C.ink} note="locked bills" />
+          <Metric label="Average audit time" value={m.velocity_min !== null ? `${m.velocity_min} min` : '–'} note="upload to posted, last 30 days" />
+          <Metric label="Leakage prevented" value={rp(m.leakage_prevented)} tone={C.ok} note="claimed minus verified" />
         </Paper>
       )}
 
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
-        <Typography variant="h2" sx={{ flex: 1 }}>Antrean staging</Typography>
+        <Typography variant="h2" sx={{ flex: 1 }}>Staging queue</Typography>
         <ToggleButtonGroup size="small" exclusive value={filter} onChange={(_, v) => v && setFilter(v)}>
-          <ToggleButton value="aktif">Perlu tindakan</ToggleButton>
-          <ToggleButton value="AP">Tagihan kontraktor</ToggleButton>
-          <ToggleButton value="AR">Penerimaan pembeli</ToggleButton>
-          <ToggleButton value="semua">Semua</ToggleButton>
+          <ToggleButton value="aktif">Needs action</ToggleButton>
+          <ToggleButton value="AP">Contractor bills</ToggleButton>
+          <ToggleButton value="AR">Buyer payments</ToggleButton>
+          <ToggleButton value="semua">All</ToggleButton>
         </ToggleButtonGroup>
       </Box>
       <Paper sx={{ overflowX: 'auto' }}>
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Jenis</TableCell>
+              <TableCell>Type</TableCell>
               <TableCell>SPV</TableCell>
-              <TableCell>Pihak</TableCell>
-              <TableCell>Referensi</TableCell>
-              <TableCell align="right">Nilai</TableCell>
-              <TableCell>Skor</TableCell>
+              <TableCell>Party</TableCell>
+              <TableCell>Reference</TableCell>
+              <TableCell align="right">Amount</TableCell>
+              <TableCell>Score</TableCell>
               <TableCell>Status</TableCell>
-              <TableCell align="right">Aksi</TableCell>
+              <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -186,7 +186,7 @@ export default function Dashboard() {
                 (i.kind === 'AR' && i.status === 'RECOMMENDED' && role === 'ROLE_SALES_AR')
               return (
                 <TableRow key={i.kind + i.id} hover>
-                  <TableCell>{i.kind === 'AP' ? 'Tagihan' : 'Penerimaan'}</TableCell>
+                  <TableCell>{i.kind === 'AP' ? 'Bill' : 'Payment'}</TableCell>
                   <TableCell>{i.spv}</TableCell>
                   <TableCell sx={{ maxWidth: 220 }}>{i.party}</TableCell>
                   <TableCell sx={{ maxWidth: 260, color: 'text.secondary' }}>
@@ -195,18 +195,18 @@ export default function Dashboard() {
                   </TableCell>
                   <TableCell align="right">{i.amount ? rp(i.amount) : '–'}</TableCell>
                   <TableCell>{i.status === 'PROCESSING' ? '–' : (
-                    <ScoreBadge score={i.score} title={i.kind === 'AP' ? 'Skor Kepastian ekstraksi AI' : 'Match Score unit'} />)}
+                    <ScoreBadge score={i.score} title={i.kind === 'AP' ? 'AI extraction confidence score' : 'Unit match score'} />)}
                   </TableCell>
                   <TableCell>
                     <StatusChip status={i.status} />
                     {i.needs_cfo && i.status === 'DISPUTE' && (
-                      <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>butuh CFO</Typography>)}
+                      <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>needs CFO</Typography>)}
                   </TableCell>
                   <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
-                    {canApprove && <Button size="small" onClick={() => approve(i)}>Setujui</Button>}
+                    {canApprove && <Button size="small" onClick={() => approve(i)}>Approve</Button>}
                     {i.kind === 'AP' && i.status === 'READY' && role === 'ROLE_FIN_AP' && (
-                      <Button size="small" color="error" onClick={() => setFlag(i)}>Tandai dispute</Button>)}
-                    <Button size="small" variant="outlined" onClick={() => nav(`/${i.kind.toLowerCase()}/${i.id}`)}>Tinjau</Button>
+                      <Button size="small" color="error" onClick={() => setFlag(i)}>Flag dispute</Button>)}
+                    <Button size="small" variant="outlined" onClick={() => nav(`/${i.kind.toLowerCase()}/${i.id}`)}>Review</Button>
                   </TableCell>
                 </TableRow>
               )
@@ -214,9 +214,9 @@ export default function Dashboard() {
             {!shown.length && (
               <TableRow>
                 <TableCell colSpan={8} sx={{ py: 4, textAlign: 'center', color: 'text.secondary' }}>
-                  Tidak ada transaksi di filter ini.{' '}
-                  {role === 'ROLE_FIN_AP' ? 'Unggah dokumen tagihan untuk memulai.' :
-                    role === 'ROLE_SALES_AR' ? 'Unggah rekening koran untuk memulai.' : ''}
+                  No transactions match this filter.{' '}
+                  {role === 'ROLE_FIN_AP' ? 'Upload a bill to get started.' :
+                    role === 'ROLE_SALES_AR' ? 'Upload a bank statement to get started.' : ''}
                 </TableCell>
               </TableRow>
             )}
@@ -225,18 +225,18 @@ export default function Dashboard() {
       </Paper>
 
       <Dialog open={!!flag} onClose={() => setFlag(null)} fullWidth maxWidth="sm">
-        <DialogTitle>Tandai sebagai dispute</DialogTitle>
+        <DialogTitle>Flag as dispute</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Termin akan dikunci dan harus ditinjau di layar audit sebelum bisa diposting.
+            The bill will be locked and must be reviewed on the audit screen before it can be posted.
           </Typography>
-          <TextField autoFocus fullWidth multiline minRows={2} label="Alasan (minimal 10 karakter)" value={reason}
+          <TextField autoFocus fullWidth multiline minRows={2} label="Reason (at least 10 characters)" value={reason}
             onChange={(e) => setReason(e.target.value)} />
         </DialogContent>
         <Divider />
         <DialogActions>
-          <Button onClick={() => setFlag(null)}>Batal</Button>
-          <Button variant="contained" color="error" disabled={reason.trim().length < 10} onClick={doFlag}>Tandai dispute</Button>
+          <Button onClick={() => setFlag(null)}>Cancel</Button>
+          <Button variant="contained" color="error" disabled={reason.trim().length < 10} onClick={doFlag}>Flag dispute</Button>
         </DialogActions>
       </Dialog>
       <Snackbar open={!!toast} autoHideDuration={6000} onClose={() => setToast(null)}>

@@ -18,7 +18,7 @@ export default function App() {
   const [demoEl, setDemoEl] = useState<HTMLElement | null>(null)
   const tab = loc.pathname.startsWith('/cfo') ? '/cfo' : '/'
 
-  if (!persona) return <Box sx={{ p: 4 }}>Memuat…</Box>
+  if (!persona) return <Box sx={{ p: 4 }}>Loading…</Box>
   const isCfo = persona.role === 'ROLE_CFO_EXEC'
 
   return (
@@ -30,15 +30,15 @@ export default function App() {
             <Typography sx={{ fontSize: 20, fontWeight: 500 }}>OmniAudit</Typography>
           </Box>
           <Tabs value={tab} sx={{ minHeight: 40, '& .MuiTab-root': { minHeight: 40 } }}>
-            <Tab label="Antrean" value="/" component={Link} to="/" />
-            {isCfo && <Tab label="Ruang CFO" value="/cfo" component={Link} to="/cfo" />}
+            <Tab label="Queue" value="/" component={Link} to="/" />
+            {isCfo && <Tab label="CFO room" value="/cfo" component={Link} to="/cfo" />}
           </Tabs>
           <Box sx={{ flex: 1 }} />
           {meta && (
-            <Tooltip title={meta.mode === 'gemini' ? `Ekstraksi dokumen memakai ${meta.model}` :
-              'Tanpa API key Gemini: ekstraksi memakai pola teks lokal'}>
+            <Tooltip title={meta.mode === 'gemini' ? `Documents are read by ${meta.model}` :
+              'No Gemini API key: fields are read with local text patterns'}>
               <Chip size="small" onClick={(e) => setDemoEl(e.currentTarget)}
-                label={meta.mode === 'gemini' ? 'Gemini aktif' : 'Mode offline'}
+                label={meta.mode === 'gemini' ? 'Gemini on' : 'Offline mode'}
                 sx={{ bgcolor: meta.mode === 'gemini' ? C.blueSoft : C.warnSoft,
                   color: meta.mode === 'gemini' ? C.blue : C.warn }} />
             </Tooltip>
@@ -48,18 +48,18 @@ export default function App() {
               <FormControlLabel
                 control={<Switch checked={!!meta?.erp_fail}
                   onChange={(e) => api.post('/demo/erp_fail', { on: e.target.checked }).then(refreshMeta)} />}
-                label="Simulasi ERP gagal"
+                label="Simulate ERP failure"
               />
             </MenuItem>
           </Menu>
           <Select size="small" value={spv} onChange={(e) => setSpv(e.target.value)} sx={{ minWidth: 200 }}
-            aria-label="Pilih SPV">
-            {isCfo && <MenuItem value="ALL">Semua SPV</MenuItem>}
+            aria-label="Select SPV">
+            {isCfo && <MenuItem value="ALL">All SPVs</MenuItem>}
             {persona.spvs.map((s) => (
               <MenuItem key={s} value={s}>{persona.spv_names[s]}</MenuItem>
             ))}
           </Select>
-          <Select size="small" value={persona.id} onChange={(e) => setPersona(e.target.value)} aria-label="Masuk sebagai"
+          <Select size="small" value={persona.id} onChange={(e) => setPersona(e.target.value)} aria-label="Signed in as"
             renderValue={() => `${persona.name} (${ROLE_LABEL[persona.role]})`} sx={{ minWidth: 220 }}>
             {personas.map((p) => (
               <MenuItem key={p.id} value={p.id}>

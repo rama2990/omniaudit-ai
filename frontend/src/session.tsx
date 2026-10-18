@@ -45,6 +45,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
 export function useSession() {
   const s = useContext(Ctx)
-  if (!s) throw new Error('SessionProvider hilang')
+  if (!s) throw new Error('SessionProvider missing')
   return s
 }

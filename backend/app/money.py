@@ -9,4 +9,4 @@ def rp(x) -> Decimal:
 
 
 def fmt_rp(x) -> str:
-    return "Rp" + f"{int(rp(x)):,}".replace(",", ".")
+    return f"IDR {int(rp(x)):,}"

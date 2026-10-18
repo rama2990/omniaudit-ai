@@ -17,7 +17,7 @@ class ErpError(Exception):
 
 def erp_post(lines: list[dict]) -> str:
     if STATE["erp_fail"]:
-        raise ErpError("ERP mock: koneksi ditolak (simulasi)")
+        raise ErpError("ERP mock: connection refused (simulated)")
     return f"ERP-{datetime.now():%Y%m%d}-{secrets.token_hex(3).upper()}"
 
 
@@ -28,20 +28,20 @@ def receipt_pdf(receipt_id: int, buyer: str, unit: str, amount: int, date_str: s
     c = Canvas(str(path), pagesize=landscape(A5))
     w, h = landscape(A5)
     c.setFont("Helvetica-Bold", 18)
-    c.drawString(36, h - 50, "KUITANSI PENERIMAAN PEMBAYARAN")
+    c.drawString(36, h - 50, "PAYMENT RECEIPT")
     c.setFont("Helvetica", 11)
     y = h - 85
-    for label, val in [("No. Kuitansi", f"KW-{receipt_id:06d}"), ("Diterima dari", buyer), ("Unit", unit),
-                       ("Tanggal", date_str), ("Jumlah", fmt_rp(amount)), ("Ref. ERP", erp_ref)]:
+    for label, val in [("Receipt no.", f"KW-{receipt_id:06d}"), ("Received from", buyer), ("Unit", unit),
+                       ("Date", date_str), ("Amount", fmt_rp(amount)), ("ERP ref.", erp_ref)]:
         c.drawString(36, y, label)
         c.drawString(160, y, f": {val}")
         y -= 20
     y -= 6
     for ln in lines:
-        c.drawString(36, y, f"Angsuran ke-{ln['seq']}: pokok {fmt_rp(int(ln['pokok']))}, "
-                            f"denda {fmt_rp(int(ln['denda_dibayar']))}")
+        c.drawString(36, y, f"Installment {ln['seq']}: principal {fmt_rp(int(ln['pokok']))}, "
+                            f"late fee {fmt_rp(int(ln['denda_dibayar']))}")
         y -= 16
     c.setFont("Helvetica-Oblique", 9)
-    c.drawString(36, 30, "Kuitansi digital OmniAudit AI (demo). Dokumen ini sah tanpa tanda tangan.")
+    c.drawString(36, 30, "OmniAudit AI digital receipt (demo). Valid without signature.")
     c.save()
     return str(path)

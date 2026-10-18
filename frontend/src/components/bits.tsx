@@ -21,7 +21,7 @@ export function ScoreBadge({ score, title }: { score: number; title?: string }) 
   const ok = score >= 0.85
   const t = ok ? TONE.ok : score >= 0.6 ? TONE.warn : TONE.bad
   return (
-    <Tooltip title={title ?? (ok ? 'Skor ≥ 85%' : 'Skor di bawah 85%: perlu ditinjau')}>
+    <Tooltip title={title ?? (ok ? 'Score ≥ 85%' : 'Score below 85%: needs review')}>
       <Box
         component="span"
         sx={{ px: 1, py: 0.25, borderRadius: 1, bgcolor: t.bg, color: t.fg, fontWeight: 600, fontSize: 12,
@@ -34,10 +34,10 @@ export function ScoreBadge({ score, title }: { score: number; title?: string }) 
 }
 
 export const SEV = {
-  CRITICAL: { label: 'Kritis', ...TONE.bad },
-  HIGH: { label: 'Tinggi', ...TONE.bad },
-  MEDIUM: { label: 'Sedang', ...TONE.warn },
-  DUP: { label: 'Kemungkinan duplikat', ...TONE.warn },
+  CRITICAL: { label: 'Critical', ...TONE.bad },
+  HIGH: { label: 'High', ...TONE.bad },
+  MEDIUM: { label: 'Medium', ...TONE.warn },
+  DUP: { label: 'Possible duplicate', ...TONE.warn },
 } as Record<string, { label: string; bg: string; fg: string }>
 
 export function SevDot({ sev }: { sev: string }) {

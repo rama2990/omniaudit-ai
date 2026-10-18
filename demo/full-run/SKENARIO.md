@@ -14,15 +14,15 @@ Urutan penting: termin berikutnya pada kontrak yang sama baru bisa diaudit setel
 |---|---|---|---|---|---|---|---|
 | FR-01 | Senin 12 Okt | Dewi (AP) / SLO1 | `FR-01_SK_kontrak-B_termin-3_overbilling.pdf` | Overbilling: invoice 60%, BAP fisik 55% | DISPUTE (OVERBILLING) | Dewi (AP): **Setujui & posting ke ERP** | POSTED, Net Payable Rp234.562.500 |
 | FR-02 | Senin 12 Okt | Dewi (AP) / SLO1 | `FR-02_BKM_kontrak-A_termin-3_butuh-CFO.pdf` | Klaim Rp2,997 M melebihi BAP; wajib persetujuan CFO | DISPUTE (OVERBILLING), butuh CFO | Dewi (AP): **Ajukan ke CFO**<br>Hartono (CFO): **CFO: Setujui & posting ke ERP** | POSTED, Net Payable Rp2.112.875.000 |
-| FR-03 | Selasa 13 Okt | Dewi (AP) / SLO1 | `FR-03_BKM_kontrak-G_klaim-ganda.pdf` | Nomor invoice yang sama sudah ditagihkan ke SPV TRD2 | HARD_STOP (KLAIM_GANDA) | Hartono (CFO): **CFO: Tolak tagihan**, alasan: “Double billing dengan INV/BKM/2026/077 di TRD2” | REJECTED |
+| FR-03 | Selasa 13 Okt | Dewi (AP) / SLO1 | `FR-03_BKM_kontrak-G_klaim-ganda.pdf` | Nomor invoice yang sama sudah ditagihkan ke SPV TRD2 | HARD_STOP (KLAIM_GANDA) | Hartono (CFO): **CFO: Tolak tagihan**, alasan: “Double billing with INV/BKM/2026/077 in TRD2” | REJECTED |
 | FR-04 | Selasa 13 Okt | Dewi (AP) / TRD2 | `FR-04_BJA_kontrak-C_termin-2_retensi-pph.pdf` | Retensi tidak dicantumkan, tarif PPh tidak sesuai SBU (tetap hijau, badge kuning) | READY (OMISI_RETENSI, PAJAK_SBU) | Dewi (AP): **Setujui & posting ke ERP** | POSTED, Net Payable Rp408.000.000 |
-| FR-05 | Selasa 13 Okt | Dewi (AP) / TRD2 | `FR-05_AN_kontrak-E_salah-hitung.pdf` | Rincian pekerjaan tidak sama dengan total; ditolak | DISPUTE (MATEMATIKA) | Dewi (AP): **Tolak tagihan**, alasan: “Rincian pekerjaan tidak sama dengan total tagihan; vendor diminta merevisi invoice.” | REJECTED |
+| FR-05 | Selasa 13 Okt | Dewi (AP) / TRD2 | `FR-05_AN_kontrak-E_salah-hitung.pdf` | Rincian pekerjaan tidak sama dengan total; ditolak | DISPUTE (MATEMATIKA) | Dewi (AP): **Tolak tagihan**, alasan: “Line items do not add up to the total; vendor asked to revise the invoice.” | REJECTED |
 | FR-06 | Rabu 14 Okt | Dewi (AP) / TRD2 | `FR-06_AN_kontrak-E_revisi.pdf` | Invoice revisi dari vendor, sekarang bersih | READY (tanpa temuan) | Dewi (AP): **Setujui & posting ke ERP** | POSTED, Net Payable Rp164.000.000 |
 | FR-07 | Rabu 14 Okt | Budi (AP) / GCT3 | `FR-07_PP_kontrak-F_nominal-digelembungkan.pdf` | Progres jujur 70%, tetapi nominal tagihan digelembungkan | DISPUTE (NILAI_TIDAK_SESUAI_PROGRES, FAKTUR_PAJAK) | Budi (AP): **Setujui & posting ke ERP** | POSTED, Net Payable Rp120.000.000 |
 | FR-08 | Rabu 14 Okt | Budi (AP) / GCT3 | `FR-08_IBP_kontrak-D_bersih_hasil-scan.pdf` | Dokumen hasil scan, bersih; ERP sempat gagal lalu dikirim ulang | READY (tanpa temuan) | Nyalakan **Simulasi ERP gagal** (klik chip mode di kanan atas)<br>Budi (AP): **Setujui & posting ke ERP** (hasil: ERP_GAGAL)<br>Matikan **Simulasi ERP gagal** (klik chip mode di kanan atas)<br>Budi (AP): **Kirim ulang ke ERP** | POSTED, Net Payable Rp305.299.500 |
 | FR-09 | Kamis 15 Okt | Dewi (AP) / SLO1 | `FR-09_SK_kontrak-B_termin-4.pdf` | Termin berikutnya: progres sebelumnya otomatis 55% (dari FR-01) | READY (tanpa temuan) | Dewi (AP): **Setujui & posting ke ERP** | POSTED, Net Payable Rp312.750.000 |
-| FR-10 | Kamis 15 Okt | Dewi (AP) / TRD2 | `FR-10_BKM_kontrak-H_progres-inkremental.pdf` | Invoice menulis progres termin ini (7%), bukan kumulatif; auditor mengoreksi ke 37% | DISPUTE (TERMIN_TIDAK_VALID) | Dewi (AP): **Ubah nilai** field *progres_klaim* menjadi `37`, alasan: “Invoice menulis progres termin (7%); kumulatif = 30% + 7% = 37%”<br>Dewi (AP): **Setujui & posting ke ERP** | POSTED, Net Payable Rp361.725.000 |
-| FR-11 | Jumat 16 Okt | Dewi (AP) / TRD2 | `FR-11_BJA_kontrak-C_nomor-kontrak-salah-tulis.pdf` | Vendor memakai nomor kontrak versinya sendiri; auditor menghubungkan manual | DISPUTE (KONTRAK_TIDAK_DITEMUKAN) | Dewi (AP): **Pilih kontrak** `SPK/TRD/2026/003`, alasan: “SPK-TRD-03/2026 adalah penomoran internal vendor untuk SPK/TRD/2026/003”<br>Dewi (AP): **Setujui & posting ke ERP** | POSTED, Net Payable Rp408.000.000 |
+| FR-10 | Kamis 15 Okt | Dewi (AP) / TRD2 | `FR-10_BKM_kontrak-H_progres-inkremental.pdf` | Invoice menulis progres termin ini (7%), bukan kumulatif; auditor mengoreksi ke 37% | DISPUTE (TERMIN_TIDAK_VALID) | Dewi (AP): **Ubah nilai** field *progres_klaim* menjadi `37`, alasan: “Invoice states this period only (7%); cumulative = 30% + 7% = 37%”<br>Dewi (AP): **Setujui & posting ke ERP** | POSTED, Net Payable Rp361.725.000 |
+| FR-11 | Jumat 16 Okt | Dewi (AP) / TRD2 | `FR-11_BJA_kontrak-C_nomor-kontrak-salah-tulis.pdf` | Vendor memakai nomor kontrak versinya sendiri; auditor menghubungkan manual | DISPUTE (KONTRAK_TIDAK_DITEMUKAN) | Dewi (AP): **Pilih kontrak** `SPK/TRD/2026/003`, alasan: “SPK-TRD-03/2026 is the vendor numbering for SPK/TRD/2026/003”<br>Dewi (AP): **Setujui & posting ke ERP** | POSTED, Net Payable Rp408.000.000 |
 | FR-12 | Jumat 16 Okt | Dewi (AP) / SLO1 | `FR-12_BKM_kontrak-A_denda-menelan-termin.pdf` | Proyek telat 16 hari: denda memotong habis termin kecil, sisanya terbawa | READY (tanpa temuan) | Dewi (AP): **Setujui & posting ke ERP** | POSTED, Net Payable Rp0, denda dipotong Rp92.515.000, sisa Rp27.485.000 terbawa |
 
 ## Penerimaan pembeli (AR)
@@ -35,7 +35,7 @@ Unggah `FR-13_rekening_koran_SLO1_2026-10-17.csv`. Ringkasan yang diharapkan: 29
 
 | Berita transfer | Status awal | Keputusan | Hasil |
 |---|---|---|---|
-| `TRF BPK SUTRISNO BLK C1/02` | RECOMMENDED | Konfirmasi unit C1-02 + waiver *Pencairan KPR Bank* (“Menunggu pencairan KPR Bank BTN”) | Teralokasi, denda waived |
+| `TRF BPK SUTRISNO BLK C1/02` | RECOMMENDED | Konfirmasi unit C1-02 + waiver *Mortgage disbursement* (“Waiting for BTN mortgage disbursement”) | Teralokasi, denda waived |
 | `TRF HENDRA GUNAWAN CLUSTER C1` | MANUAL_REVIEW | Pilih unit C1-03 | Teralokasi. Dua unit milik pembeli yang sama; Andi memilih C1-03 sesuai konfirmasi telepon |
 | `PEMBAYARAN UNIT C1 08` | RECOMMENDED | Konfirmasi unit C1-08 | Teralokasi |
 
@@ -47,7 +47,7 @@ Unggah `FR-14_rekening_koran_TRD2_2026-10-17.csv`. Ringkasan yang diharapkan: 8 
 
 | Berita transfer | Status awal | Keputusan | Hasil |
 |---|---|---|---|
-| `TWR A 10/03 ANGS OKT` | RECOMMENDED | Konfirmasi unit A-10-03 + waiver *Kewenangan Eksekutif* (“Pembeli VIP, pemilik 3 unit di Tower A”) | Teralokasi, denda menunggu cfo; Hartono menyetujui waiver di Ruang CFO, denda waived |
+| `TWR A 10/03 ANGS OKT` | RECOMMENDED | Konfirmasi unit A-10-03 + waiver *Executive authority* (“VIP buyer, owns 3 units in Tower A”) | Teralokasi, denda menunggu cfo; Hartono menyetujui waiver di Ruang CFO, denda waived |
 | `CICILAN A-11-01 SEBAGIAN` | RECOMMENDED | Konfirmasi unit A-11-01 | Teralokasi, angsuran baru terbayar sebagian |
 | `UNIT A 11 03` | RECOMMENDED | Konfirmasi unit A-11-03 | Teralokasi |
 | `TRF A-12-03` | MANUAL_REVIEW | Pilih unit A-12-03 | Teralokasi. Dikirim oleh pasangan pembeli; skor nama rendah, kode unit cocok |
@@ -62,7 +62,7 @@ Unggah `FR-15_rekening_koran_GCT3_2026-10-17.csv`. Ringkasan yang diharapkan: 8 
 
 | Berita transfer | Status awal | Keputusan | Hasil |
 |---|---|---|---|
-| `BLOK G1 NO 2 KPR` | RECOMMENDED | Konfirmasi unit G1-02 + waiver *Pencairan KPR Bank* (“KPR Bank Mandiri cair 20 Oktober”) | Teralokasi, denda waived |
+| `BLOK G1 NO 2 KPR` | RECOMMENDED | Konfirmasi unit G1-02 + waiver *Mortgage disbursement* (“Mandiri mortgage disburses on 20 October”) | Teralokasi, denda waived |
 | `VA PAYMENT` | RECOMMENDED | Konfirmasi unit G1-04 | Teralokasi, denda ditagih |
 | `G1/06 TRF` | RECOMMENDED | Konfirmasi unit G1-06 | Teralokasi, selisih biaya transfer Rp150.000 dianggap lunas |
 | `ANGS OKT NOV G1-09` | RECOMMENDED | Konfirmasi unit G1-09 | Teralokasi |

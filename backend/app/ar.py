@@ -17,7 +17,8 @@ from app.models import Installment, JournalBatch, Outbox, Receipt, Unit, now
 from app.money import fmt_rp
 
 OPEN = ("UNALLOCATED", "RECOMMENDED", "MANUAL_REVIEW")
-WAIVER_REASONS = ("Pencairan KPR Bank", "Promosi Special Waiver", "Kewenangan Eksekutif")
+WAIVER_REASONS = ("Mortgage disbursement", "Special promotion", "Executive authority")
+EXECUTIVE = "Executive authority"
 
 
 def _insts(s: Session, unit_id: int) -> list[Installment]:
@@ -57,7 +58,7 @@ def ingest_csv(s: Session, spv_id: str, text: str, actor: str, role: str) -> dic
     rows = list(csv.DictReader(io.StringIO(text.lstrip("﻿"))))
     required = {"tanggal", "nama_pengirim", "bank", "nominal", "berita"}
     if not rows or not required <= set(rows[0]):
-        raise ValueError(f"Kolom CSV wajib: {', '.join(sorted(required))}")
+        raise ValueError(f"Required CSV columns: {', '.join(sorted(required))}")
     infos = units_info(s, spv_id)
     stats = {"rows": 0, "auto": 0, "recommended": 0, "manual": 0, "duplicates": 0}
     for row in rows:
@@ -96,16 +97,16 @@ def preview(s: Session, r: Receipt, unit_id: int, waive: bool) -> dict:
 
 def confirm(s: Session, r: Receipt, unit_id: int, waiver: dict | None, actor: str, role: str) -> Receipt:
     if r.status not in OPEN + ("AUTO",):
-        raise ValueError("Penerimaan sudah dialokasikan")
+        raise ValueError("This payment is already allocated")
     unit = s.get(Unit, unit_id)
     if unit is None or unit.spv_id != r.spv_id:
-        raise ValueError("Unit tidak ditemukan di SPV ini")
+        raise ValueError("Unit not found in this SPV")
     if waiver:
         if waiver.get("reason") not in WAIVER_REASONS:
-            raise ValueError("Alasan Waiver tidak valid")
+            raise ValueError("Invalid waiver reason")
         if not (waiver.get("justification") or "").strip():
-            raise ValueError("Justifikasi Waiver wajib diisi")
-    pending_cfo = bool(waiver) and waiver["reason"] == "Kewenangan Eksekutif"
+            raise ValueError("A waiver justification is required")
+    pending_cfo = bool(waiver) and waiver["reason"] == EXECUTIVE
     data, a = preview(s, r, unit_id, waive=bool(waiver))
     # update angsuran
     insts = {i.id: i for i in _insts(s, unit_id)}
@@ -126,10 +127,10 @@ def confirm(s: Session, r: Receipt, unit_id: int, waiver: dict | None, actor: st
     r.penalty_status = ("MENUNGGU_CFO" if pending_cfo else "WAIVED") if waiver else (
         "DITAGIH" if a.total_denda > 0 else "")
     pdf = receipt_pdf(r.id, unit.buyer, unit.code, r.amount, r.date.isoformat(), data["lines"], r.erp_ref or "-")
-    msg = (f"Yth. {unit.buyer}, pembayaran {fmt_rp(r.amount)} untuk unit {unit.code} tanggal {r.date:%d-%m-%Y} "
-           f"telah kami terima dan alokasikan. Kuitansi digital terlampir.")
+    msg = (f"Dear {unit.buyer}, we have received and allocated your payment of {fmt_rp(r.amount)} for unit {unit.code} "
+           f"on {r.date:%d %b %Y}. Your digital receipt is attached.")
     if a.total_denda > 0 and not waiver:
-        msg += f" Denda keterlambatan {fmt_rp(a.total_denda)} tercatat."
+        msg += f" A late fee of {fmt_rp(a.total_denda)} has been recorded."
     s.add(Outbox(receipt_id=r.id, channel="WHATSAPP", to=unit.phone, body=msg, attachment=pdf))
     s.add(Outbox(receipt_id=r.id, channel="EMAIL", to=unit.email, body=msg, attachment=pdf))
     s.add(r)
@@ -149,7 +150,7 @@ def confirm(s: Session, r: Receipt, unit_id: int, waiver: dict | None, actor: st
 
 def cfo_waiver(s: Session, r: Receipt, approve: bool, actor: str, role: str, reason: str) -> Receipt:
     if r.penalty_status != "MENUNGGU_CFO":
-        raise ValueError("Tidak ada Waiver yang menunggu CFO")
+        raise ValueError("No waiver is awaiting the CFO")
     total = Decimal(r.allocation["total_denda"])
     if approve:
         r.penalty_status = "WAIVED"

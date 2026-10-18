@@ -95,6 +95,6 @@ def test_kuota_habis_tidak_diulang(pages, monkeypatch):
             self.models = Models()
 
     monkeypatch.setattr(genai, "Client", FakeClient)
-    with pytest.raises(RuntimeError, match="Kuota Gemini habis"):
+    with pytest.raises(RuntimeError, match="Gemini quota exhausted"):
         ex._gemini(pages)
     assert len(calls) == 1  # tidak membuang kuota dengan mengulang

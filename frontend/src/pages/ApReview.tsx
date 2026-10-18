@@ -14,28 +14,33 @@ import PdfEvidence, { type EvidenceBox } from '../components/PdfEvidence'
 import { C } from '../theme'
 
 const ROWS: [string, string, string[]][] = [
-  ['np', 'Nilai progres termin', ['progres_klaim', 'progres_bap']],
-  ['um', 'Potongan uang muka', []],
-  ['dpp_faktur', 'DPP faktur', ['faktur_dpp']],
-  ['ppn', 'PPN 11%', ['ppn_tertulis', 'faktur_ppn']],
-  ['bruto', 'Bruto tagihan', ['bruto_tertulis']],
-  ['ret', 'Retensi', ['retensi_tertulis']],
-  ['pen', 'Potongan denda keterlambatan', ['tanggal_bap']],
-  ['pph', 'PPh 4(2)', ['pph_tertulis_rate']],
+  ['np', 'Progress value', ['progres_klaim', 'progres_bap']],
+  ['um', 'Down-payment recoupment', []],
+  ['dpp_faktur', 'Tax base (DPP)', ['faktur_dpp']],
+  ['ppn', 'VAT 11%', ['ppn_tertulis', 'faktur_ppn']],
+  ['bruto', 'Gross bill', ['bruto_tertulis']],
+  ['ret', 'Retention', ['retensi_tertulis']],
+  ['pen', 'Late penalty', ['tanggal_bap']],
+  ['pph', 'Withholding tax 4(2)', ['pph_tertulis_rate']],
 ]
 const ACTION: Record<string, { label: string; color?: 'error' | 'primary'; variant?: 'contained' | 'outlined'; reason?: boolean }> = {
-  post: { label: 'Setujui & posting ke ERP', variant: 'contained' },
-  submit_cfo: { label: 'Ajukan ke CFO', variant: 'contained' },
-  cfo_approve: { label: 'Setujui & posting ke ERP', variant: 'contained' },
-  cfo_unlock: { label: 'Buka kunci untuk ditinjau', variant: 'outlined', reason: true },
-  resend: { label: 'Kirim ulang ke ERP', variant: 'contained' },
-  retry: { label: 'Proses ulang', variant: 'contained' },
-  flag: { label: 'Tandai dispute', color: 'error', variant: 'outlined', reason: true },
-  reject: { label: 'Tolak tagihan', color: 'error', variant: 'outlined', reason: true },
-  cfo_reject: { label: 'Tolak tagihan', color: 'error', variant: 'outlined', reason: true },
+  post: { label: 'Approve & post to ERP', variant: 'contained' },
+  submit_cfo: { label: 'Send to CFO', variant: 'contained' },
+  cfo_approve: { label: 'Approve & post to ERP', variant: 'contained' },
+  cfo_unlock: { label: 'Unlock for review', variant: 'outlined', reason: true },
+  resend: { label: 'Resend to ERP', variant: 'contained' },
+  retry: { label: 'Reprocess', variant: 'contained' },
+  flag: { label: 'Flag dispute', color: 'error', variant: 'outlined', reason: true },
+  reject: { label: 'Reject bill', color: 'error', variant: 'outlined', reason: true },
+  cfo_reject: { label: 'Reject bill', color: 'error', variant: 'outlined', reason: true },
 }
+const JENIS: Record<string, string> = {
+  PELAKSANAAN: 'construction', TERINTEGRASI: 'integrated', PERENCANAAN: 'design', PENGAWASAN: 'supervision',
+}
+const SBU: Record<string, string> = { KECIL: 'small', MENENGAH: 'medium', BESAR: 'large' }
+const lc = (s: string) => s.charAt(0).toLowerCase() + s.slice(1)
 const AGENT_COLOR: Record<string, string> = {
-  'Parser Agent': C.blue, 'Contract Agent': '#9334E6', 'Adversarial Auditor': C.bad, 'Mesin Kalkulasi': C.ok, Sistem: C.muted,
+  'Parser Agent': C.blue, 'Contract Agent': '#9334E6', 'Adversarial Auditor': C.bad, Calculator: C.ok, System: C.muted,
 }
 
 export default function ApReview() {
@@ -80,10 +85,10 @@ export default function ApReview() {
       setDlg(null)
       setReason('')
       const msg: Record<string, string> = {
-        POSTED: `Terposting ke ERP. Nomor batch: ${d.erp_ref}`, MENUNGGU_CFO: 'Diajukan ke CFO.', REJECTED: 'Tagihan ditolak.',
-        ERP_GAGAL: 'ERP menolak batch jurnal. Data tersimpan; kirim ulang saat ERP tersedia.', DISPUTE: 'Termin dikunci sebagai dispute.',
+        POSTED: `Posted to ERP. Batch number: ${d.erp_ref}`, MENUNGGU_CFO: 'Sent to CFO.', REJECTED: 'Bill rejected.',
+        ERP_GAGAL: 'ERP rejected the journal batch. Data is saved; resend when ERP is available.', DISPUTE: 'Bill locked as a dispute.',
       }
-      setToast({ msg: action === 'override' || action === 'set_contract' ? 'Nilai diperbarui dan dihitung ulang.' : (msg[d.status] ?? `Status: ${d.status}`), err: d.status === 'ERP_GAGAL' })
+      setToast({ msg: action === 'override' || action === 'set_contract' ? 'Values updated and recalculated.' : (msg[d.status] ?? `Status: ${d.status}`), err: d.status === 'ERP_GAGAL' })
     } catch (e) {
       setToast({ msg: (e as Error).message, err: true })
     }
@@ -95,22 +100,22 @@ export default function ApReview() {
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
-        <IconButton component={Link} to="/" aria-label="Kembali ke antrean"><ArrowBack /></IconButton>
+        <IconButton component={Link} to="/" aria-label="Back to queue"><ArrowBack /></IconButton>
         <Box sx={{ flex: 1, minWidth: 240 }}>
           <Typography variant="h1">{t.vendor?.name ?? t.filename}</Typography>
           <Typography color="text.secondary">
-            {t.contract ? `${t.contract.no}, ${t.contract.name}` : 'Kontrak belum terhubung'}
+            {t.contract ? `${t.contract.no}, ${t.contract.name}` : 'No contract linked'}
           </Typography>
         </Box>
         <StatusChip status={t.status} size="medium" />
-        {!processing && <ScoreBadge score={Number(t.confidence)} title="Skor Kepastian: keyakinan terendah di antara field wajib" />}
-        {t.mode && <Chip size="small" variant="outlined" label={t.mode === 'gemini' ? `Dibaca oleh ${t.model}` : t.mode === 'fake' ? 'Dibaca pola teks lokal' : 'Arsip'} />}
+        {!processing && <ScoreBadge score={Number(t.confidence)} title="Confidence score: the lowest confidence among required fields" />}
+        {t.mode && <Chip size="small" variant="outlined" label={t.mode === 'gemini' ? `Read by ${t.model}` : t.mode === 'fake' ? 'Read by local text patterns' : 'Archive'} />}
       </Box>
 
       {t.status === 'DISPUTE' && t.needs_cfo && (
-        <Alert severity="warning" sx={{ mb: 2 }}>Nilai klaim di atas Rp500 juta. Setelah ditinjau, termin ini harus disetujui CFO sebelum diposting.</Alert>)}
-      {t.fallback && <Alert severity="info" sx={{ mb: 2 }}>Gemini tidak tersedia saat dokumen ini diproses ({t.fallback}). Dokumen dibaca dengan pola teks lokal; periksa nilai bertanda sebelum menyetujui.</Alert>}
-      {t.erp_ref && <Alert severity="success" sx={{ mb: 2 }}>Jurnal terposting ke ERP dengan nomor batch {t.erp_ref}.</Alert>}
+        <Alert severity="warning" sx={{ mb: 2 }}>Claim above IDR 500 million. After review, the CFO must approve this bill before it is posted.</Alert>)}
+      {t.fallback && <Alert severity="info" sx={{ mb: 2 }}>Gemini was unavailable when this document was processed ({t.fallback}). It was read with local text patterns; check flagged values before approving.</Alert>}
+      {t.erp_ref && <Alert severity="success" sx={{ mb: 2 }}>Journal posted to ERP with batch number {t.erp_ref}.</Alert>}
       {t.error && t.status !== 'POSTED' && <Alert severity="error" sx={{ mb: 2 }}>{t.error}</Alert>}
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
@@ -119,13 +124,13 @@ export default function ApReview() {
             <PdfEvidence url={`/api/ap/termin/${id}/pdf?persona=${getPersonaId()}`} pages={t.pages} boxes={boxes}
               focus={focus} onFocus={setFocus} />
           ) : (
-            <Box sx={{ p: 3 }}><Typography color="text.secondary">Dokumen sedang dibaca…</Typography><LinearProgress sx={{ mt: 2 }} /></Box>
+            <Box sx={{ p: 3 }}><Typography color="text.secondary">Reading the document…</Typography><LinearProgress sx={{ mt: 2 }} /></Box>
           )}
         </Paper>
 
         <Box>
           {t.anomalies.length > 0 && (
-            <Section title="Temuan auditor">
+            <Section title="Auditor findings">
               {t.anomalies.map((a: any, i: number) => (
                 <Box key={i} sx={{ display: 'flex', gap: 1.5, p: 1.25, mb: 0.75, borderRadius: 1, bgcolor: SEV[a.severity].bg }}>
                   <Typography variant="body2" sx={{ color: SEV[a.severity].fg, fontWeight: 600, minWidth: 52 }}>{SEV[a.severity].label}</Typography>
@@ -136,15 +141,15 @@ export default function ApReview() {
           )}
 
           {cv?.net !== undefined && (
-            <Section title="Klaim kontraktor dibandingkan hasil verifikasi BAP">
+            <Section title="Contractor claim vs. inspection-verified amounts">
               <Paper>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
                       <TableCell />
-                      <TableCell align="right">Klaim invoice ({pct(cc.p)})</TableCell>
-                      <TableCell align="right">Terverifikasi ({pct(cv.p)})</TableCell>
-                      <TableCell align="right">Selisih</TableCell>
+                      <TableCell align="right">Claimed ({pct(cc.p)})</TableCell>
+                      <TableCell align="right">Verified ({pct(cv.p)})</TableCell>
+                      <TableCell align="right">Difference</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -156,8 +161,8 @@ export default function ApReview() {
                           <TableCell>
                             {label}
                             {link && (
-                              <Tooltip title="Tunjukkan di dokumen">
-                                <IconButton size="small" onClick={() => setFocus(link)} aria-label={`Tunjukkan ${label} di dokumen`}>
+                              <Tooltip title="Show in document">
+                                <IconButton size="small" onClick={() => setFocus(link)} aria-label={`Show ${label} in document`}>
                                   <PlaceOutlined fontSize="inherit" />
                                 </IconButton>
                               </Tooltip>)}
@@ -178,25 +183,25 @@ export default function ApReview() {
                 </Table>
                 {leak > 0 && (
                   <Typography variant="body2" sx={{ px: 1.5, pb: 1.5, color: C.ok }}>
-                    Verifikasi mencegah kelebihan bayar {rp(leak)}.
+                    Verification prevented an overpayment of {rp(leak)}.
                   </Typography>)}
               </Paper>
             </Section>
           )}
 
           {t.contract && (
-            <Section title="Ketentuan kontrak & pajak">
+            <Section title="Contract & tax terms">
               <Paper sx={{ p: 1.5, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 1.5 }}>
                 {[
-                  ['DPP kontrak', rp(t.contract.dpp_kontrak)],
-                  ['Vendor', `${t.vendor.jenis.toLowerCase()}, SBU ${t.vendor.sbu.toLowerCase()}`],
-                  ['Tarif PPh 4(2)', pct(t.summary.pph_rate, 2)],
-                  ['Retensi', pct(t.contract.ret_pct)],
-                  ['Uang muka', `${pct(t.contract.um_pct)}, saldo ${rp(t.summary.um_saldo)}`],
-                  ['Progres sebelumnya', pct(t.summary.progres_sebelumnya)],
-                  ['Target selesai', new Date(t.contract.target_date).toLocaleDateString('id-ID', { dateStyle: 'medium' })],
-                  ['Hari terlambat', t.summary.late_days ? `${t.summary.late_days} hari` : 'Tidak terlambat'],
-                  ['Sisa denda terbawa', rp(t.summary.pen_left)],
+                  ['Contract value (excl. VAT)', rp(t.contract.dpp_kontrak)],
+                  ['Vendor', `${JENIS[t.vendor.jenis.toUpperCase()] ?? t.vendor.jenis.toLowerCase()}, ${t.vendor.sbu.toUpperCase() === 'TANPA' ? 'no grade' : `grade ${SBU[t.vendor.sbu.toUpperCase()] ?? t.vendor.sbu.toLowerCase()}`}`],
+                  ['Withholding tax rate', pct(t.summary.pph_rate, 2)],
+                  ['Retention', pct(t.contract.ret_pct)],
+                  ['Down payment', `${pct(t.contract.um_pct)}, balance ${rp(t.summary.um_saldo)}`],
+                  ['Previous progress', pct(t.summary.progres_sebelumnya)],
+                  ['Target completion', new Date(t.contract.target_date).toLocaleDateString('en-GB', { dateStyle: 'medium' })],
+                  ['Days late', t.summary.late_days ? `${t.summary.late_days} ${t.summary.late_days === 1 ? 'day' : 'days'}` : 'Not late'],
+                  ['Penalty carried forward', rp(t.summary.pen_left)],
                 ].map(([k, v]) => (
                   <Box key={k}>
                     <Typography variant="caption" color="text.secondary">{k}</Typography>
@@ -208,10 +213,10 @@ export default function ApReview() {
           )}
 
           {t.fields.length > 0 && (
-            <Section title="Data yang dibaca dari dokumen"
+            <Section title="Values read from the document"
               action={editable && cc?.p !== undefined ? (
                 <Button size="small" startIcon={<EditOutlined />} onClick={() => setDlg({ action: 'override', field: 'progres_disetujui', value: String(Number(cv.p) * 100) })}>
-                  Ubah progres disetujui
+                  Change approved progress
                 </Button>) : undefined}>
               <Paper>
                 <Table size="small">
@@ -220,17 +225,17 @@ export default function ApReview() {
                       <TableRow key={f.name} hover selected={focus === f.name} onClick={() => f.boxes.length && setFocus(f.name)}
                         sx={{ cursor: f.boxes.length ? 'pointer' : 'default' }}>
                         <TableCell sx={{ color: 'text.secondary', width: '38%' }}>
-                          {FIELD_LABEL[f.name] ?? f.name.replace('line_item_', 'Rincian pekerjaan ')}
-                          {f.required && <Typography component="span" variant="caption" sx={{ ml: 0.5 }}>(wajib)</Typography>}
+                          {FIELD_LABEL[f.name] ?? f.name.replace('line_item_', 'Line item ')}
+                          {f.required && <Typography component="span" variant="caption" sx={{ ml: 0.5 }}>(required)</Typography>}
                         </TableCell>
                         <TableCell sx={{ color: f.hot ? C.bad : undefined, fontWeight: 500 }}>
                           {f.override !== null ? (
                             <><s style={{ color: C.muted, fontWeight: 400 }}>{f.value}</s> {f.override}</>
-                          ) : f.value ?? <Typography component="span" variant="body2" color="text.secondary">tidak tercantum</Typography>}
+                          ) : f.value ?? <Typography component="span" variant="body2" color="text.secondary">not stated</Typography>}
                         </TableCell>
                         <TableCell sx={{ width: 120 }}>
                           {f.value !== null && (
-                            <Tooltip title={f.grounded ? 'Nilai ditemukan di teks OCR' : 'Nilai tidak ditemukan di teks dokumen'}>
+                            <Tooltip title={f.grounded ? 'Value found in the OCR text' : 'Value not found in the document text'}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <LinearProgress variant="determinate" value={f.confidence * 100} color={f.confidence >= 0.85 ? 'success' : 'error'}
                                   sx={{ flex: 1, height: 6, borderRadius: 3 }} />
@@ -240,7 +245,7 @@ export default function ApReview() {
                         </TableCell>
                         <TableCell sx={{ width: 44 }} onClick={(e) => e.stopPropagation()}>
                           {editable && !f.name.startsWith('line_item') && (
-                            <IconButton size="small" aria-label={`Ubah ${FIELD_LABEL[f.name]}`}
+                            <IconButton size="small" aria-label={`Edit ${lc(FIELD_LABEL[f.name] ?? f.name)}`}
                               onClick={() => setDlg({ action: 'override', field: f.name, value: f.override ?? f.value ?? '' })}>
                               <EditOutlined fontSize="inherit" />
                             </IconButton>)}
@@ -254,10 +259,10 @@ export default function ApReview() {
           )}
 
           {t.journal.length > 0 && (
-            <Section title={t.erp_ref ? 'Jurnal terposting' : 'Jurnal yang akan diposting'}>
+            <Section title={t.erp_ref ? 'Posted journal' : 'Journal to post'}>
               <Paper>
                 <Table size="small">
-                  <TableHead><TableRow><TableCell>Akun</TableCell><TableCell align="right">Debit</TableCell><TableCell align="right">Kredit</TableCell></TableRow></TableHead>
+                  <TableHead><TableRow><TableCell>Account</TableCell><TableCell align="right">Debit</TableCell><TableCell align="right">Credit</TableCell></TableRow></TableHead>
                   <TableBody>
                     {t.journal.map((l: any, i: number) => (
                       <TableRow key={i}>
@@ -272,9 +277,9 @@ export default function ApReview() {
             </Section>
           )}
 
-          <Section title="Jejak kerja agen">
+          <Section title="Agent trail">
             <Paper ref={logBox} sx={{ p: 1.5, maxHeight: 280, overflowY: 'auto', bgcolor: '#FAFAFA' }} aria-live="polite">
-              {events.length === 0 && <Typography variant="body2" color="text.secondary">Belum ada aktivitas.</Typography>}
+              {events.length === 0 && <Typography variant="body2" color="text.secondary">No activity yet.</Typography>}
               {events.map((e, i) => (
                 <Box key={i} sx={{ display: 'flex', gap: 1.5, py: 0.4, fontSize: 13 }}>
                   <Box sx={{ minWidth: 150, color: AGENT_COLOR[e.agent] ?? C.muted, fontWeight: 600 }}>{e.agent}</Box>
@@ -289,12 +294,12 @@ export default function ApReview() {
             <Paper sx={{ p: 1.5, position: 'sticky', bottom: 12, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center',
               boxShadow: '0 2px 6px rgba(60,64,67,.15)' }}>
               {t.actions.includes('set_contract') && !t.contract && (
-                <Button variant="outlined" onClick={() => setDlg({ action: 'set_contract', value: '' })}>Pilih kontrak</Button>)}
+                <Button variant="outlined" onClick={() => setDlg({ action: 'set_contract', value: '' })}>Link contract</Button>)}
               <Box sx={{ flex: 1 }} />
               {visibleActions.map((a: string) => (
                 <Button key={a} color={ACTION[a].color ?? 'primary'} variant={ACTION[a].variant}
                   onClick={() => (ACTION[a].reason ? setDlg({ action: a }) : run(a))}>
-                  {t.status === 'DISPUTE' && a === 'post' ? 'Terima koreksi & posting ke ERP' : ACTION[a].label}
+                  {t.status === 'DISPUTE' && a === 'post' ? 'Accept correction & post to ERP' : ACTION[a].label}
                 </Button>
               ))}
             </Paper>
@@ -304,27 +309,27 @@ export default function ApReview() {
 
       <Dialog open={!!dlg} onClose={() => setDlg(null)} fullWidth maxWidth="sm">
         <DialogTitle>
-          {dlg?.action === 'override' ? `Ubah ${FIELD_LABEL[dlg.field ?? ''] ?? dlg.field}` :
-            dlg?.action === 'set_contract' ? 'Hubungkan ke kontrak' : ACTION[dlg?.action ?? '']?.label}
+          {dlg?.action === 'override' ? `Edit ${lc(FIELD_LABEL[dlg.field ?? ''] ?? dlg.field ?? '')}` :
+            dlg?.action === 'set_contract' ? 'Link contract' : ACTION[dlg?.action ?? '']?.label}
         </DialogTitle>
         <DialogContent sx={{ display: 'grid', gap: 2, pt: '8px !important' }}>
           {dlg?.action === 'override' && (
-            <TextField label="Nilai baru" value={dlg.value} autoFocus
-              helperText={dlg.field === 'progres_disetujui' ? 'Tidak boleh melebihi progres klaim maupun progres BAP.' : undefined}
+            <TextField label="New value" value={dlg.value} autoFocus
+              helperText={dlg.field === 'progres_disetujui' ? 'Must not exceed the claimed progress or the BAP progress.' : undefined}
               onChange={(e) => setDlg({ ...dlg, value: e.target.value })} />)}
           {dlg?.action === 'set_contract' && (
-            <TextField select label="Kontrak" value={dlg.value} onChange={(e) => setDlg({ ...dlg, value: e.target.value })}>
+            <TextField select label="Contract" value={dlg.value} onChange={(e) => setDlg({ ...dlg, value: e.target.value })}>
               {t.contracts.map((c: any) => <MenuItem key={c.id} value={String(c.id)}>{c.no}: {c.name}</MenuItem>)}
             </TextField>)}
-          <TextField label="Alasan pertimbangan audit (minimal 10 karakter)" multiline minRows={2} value={reason}
+          <TextField label="Audit reason (at least 10 characters)" multiline minRows={2} value={reason}
             onChange={(e) => setReason(e.target.value)} autoFocus={dlg?.action !== 'override'} />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDlg(null)}>Batal</Button>
+          <Button onClick={() => setDlg(null)}>Cancel</Button>
           <Button variant="contained" color={ACTION[dlg?.action ?? '']?.color ?? 'primary'} disabled={reason.trim().length < 10}
             onClick={() => dlg && run(dlg.action, dlg.action === 'override' ? { field: dlg.field, value: dlg.value } :
               dlg.action === 'set_contract' ? { contract_id: Number(dlg.value) } : {})}>
-            {dlg?.action === 'override' ? 'Simpan & hitung ulang' : dlg?.action === 'set_contract' ? 'Hubungkan' : ACTION[dlg?.action ?? '']?.label}
+            {dlg?.action === 'override' ? 'Save & recalculate' : dlg?.action === 'set_contract' ? 'Link' : ACTION[dlg?.action ?? '']?.label}
           </Button>
         </DialogActions>
       </Dialog>

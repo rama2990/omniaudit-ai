@@ -1,4 +1,4 @@
-// Klien API kecil: header persona + format angka Indonesia.
+// Small API client: persona header + number formatting.
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export type Persona = {
@@ -24,7 +24,7 @@ export const setPersonaId = (id: string) => {
   try {
     localStorage.setItem('persona', id)
   } catch {
-    /* penyimpanan browser tidak tersedia */
+    /* browser storage unavailable */
   }
 }
 
@@ -50,7 +50,7 @@ async function call<T = any>(method: string, path: string, body?: unknown): Prom
       const j = await res.json()
       msg = typeof j.detail === 'string' ? j.detail : JSON.stringify(j.detail)
     } catch {
-      /* bukan JSON */
+      /* not JSON */
     }
     throw new ApiError(res.status, msg)
   }
@@ -63,13 +63,13 @@ export const api = {
   upload: <T = any>(p: string, form: FormData) => call<T>('POST', p, form),
 }
 
-const nf = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 })
+const nf = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
 export const rp = (v: number | string | null | undefined) =>
-  v === null || v === undefined || v === '' ? '–' : `Rp${nf.format(Number(v))}`
+  v === null || v === undefined || v === '' ? '–' : `IDR ${nf.format(Number(v))}`
 export const pct = (v: number | string | null | undefined, digits = 0) =>
-  v === null || v === undefined || v === '' ? '–' : `${(Number(v) * 100).toFixed(digits).replace('.', ',')}%`
+  v === null || v === undefined || v === '' ? '–' : `${(Number(v) * 100).toFixed(digits)}%`
 export const dt = (iso: string) =>
-  new Date(iso.endsWith('Z') || iso.includes('+') ? iso : iso + 'Z').toLocaleString('id-ID', {
+  new Date(iso.endsWith('Z') || iso.includes('+') ? iso : iso + 'Z').toLocaleString('en-GB', {
     dateStyle: 'medium',
     timeStyle: 'short',
   })
@@ -81,35 +81,35 @@ export const ROLE_LABEL: Record<string, string> = {
 }
 
 export const STATUS: Record<string, { label: string; tone: 'ok' | 'warn' | 'bad' | 'info' | 'mute' }> = {
-  PROCESSING: { label: 'Diproses', tone: 'info' },
-  READY: { label: 'Siap disetujui', tone: 'ok' },
+  PROCESSING: { label: 'Processing', tone: 'info' },
+  READY: { label: 'Ready to approve', tone: 'ok' },
   DISPUTE: { label: 'Dispute', tone: 'bad' },
-  HARD_STOP: { label: 'Hard Stop', tone: 'bad' },
-  MENUNGGU_CFO: { label: 'Menunggu CFO', tone: 'warn' },
-  POSTED: { label: 'Terposting', tone: 'mute' },
-  REJECTED: { label: 'Ditolak', tone: 'mute' },
-  ERP_GAGAL: { label: 'ERP gagal', tone: 'bad' },
-  GAGAL_PROSES: { label: 'Gagal diproses', tone: 'bad' },
-  UNALLOCATED: { label: 'Belum teralokasi', tone: 'warn' },
-  RECOMMENDED: { label: 'Rekomendasi siap', tone: 'ok' },
-  MANUAL_REVIEW: { label: 'Tinjau manual', tone: 'warn' },
-  ALLOCATED: { label: 'Teralokasi', tone: 'mute' },
+  HARD_STOP: { label: 'Hard stop', tone: 'bad' },
+  MENUNGGU_CFO: { label: 'Awaiting CFO', tone: 'warn' },
+  POSTED: { label: 'Posted', tone: 'mute' },
+  REJECTED: { label: 'Rejected', tone: 'mute' },
+  ERP_GAGAL: { label: 'ERP failed', tone: 'bad' },
+  GAGAL_PROSES: { label: 'Processing failed', tone: 'bad' },
+  UNALLOCATED: { label: 'Unallocated', tone: 'warn' },
+  RECOMMENDED: { label: 'Match ready', tone: 'ok' },
+  MANUAL_REVIEW: { label: 'Manual review', tone: 'warn' },
+  ALLOCATED: { label: 'Allocated', tone: 'mute' },
 }
 
 export const FIELD_LABEL: Record<string, string> = {
-  invoice_no: 'Nomor invoice',
-  npwp: 'NPWP vendor',
-  contract_no: 'Nomor kontrak',
-  progres_klaim: 'Progres klaim (%)',
-  progres_bap: 'Progres BAP (%)',
-  tanggal_bap: 'Tanggal BAP',
-  bruto_tertulis: 'Bruto tertulis',
-  ppn_tertulis: 'PPN tertulis',
-  retensi_tertulis: 'Retensi tertulis',
-  pph_tertulis_rate: 'Tarif PPh di invoice (%)',
-  faktur_nsfp: 'Nomor seri faktur',
-  faktur_npwp: 'NPWP di faktur',
-  faktur_dpp: 'DPP di faktur',
-  faktur_ppn: 'PPN di faktur',
-  progres_disetujui: 'Progres disetujui (%)',
+  invoice_no: 'Invoice number',
+  npwp: 'Vendor tax ID (NPWP)',
+  contract_no: 'Contract number',
+  progres_klaim: 'Claimed progress (%)',
+  progres_bap: 'Inspected progress, BAP (%)',
+  tanggal_bap: 'Inspection date',
+  bruto_tertulis: 'Stated gross amount',
+  ppn_tertulis: 'Stated VAT',
+  retensi_tertulis: 'Stated retention',
+  pph_tertulis_rate: 'Stated withholding tax rate (%)',
+  faktur_nsfp: 'Tax invoice serial',
+  faktur_npwp: 'Tax ID on tax invoice',
+  faktur_dpp: 'Tax base on tax invoice',
+  faktur_ppn: 'VAT on tax invoice',
+  progres_disetujui: 'Approved progress (%)',
 }

@@ -135,7 +135,7 @@ def test_uj2_rekonsiliasi(c):
     assert sut["preview"]["lines"][0]["late_days"] == 12 and int(sut["preview"]["total_denda"]) > 0
     r = c.post(f"/api/ar/receipt/{sut['id']}/confirm", headers=H("andi"),
                json={"unit_id": sut["selected_unit"]["id"],
-                     "waiver": {"reason": "Pencairan KPR Bank", "justification": "Menunggu pencairan KPR BTN"}}).json()
+                     "waiver": {"reason": "Mortgage disbursement", "justification": "Waiting for BTN mortgage"}}).json()
     assert r["status"] == "ALLOCATED" and r["penalty_status"] == "WAIVED" and len(r["outbox"]) == 2
     assert c.post(f"/api/ar/receipt/{sut['id']}/confirm", headers=H("andi"),
                   json={"unit_id": sut["selected_unit"]["id"]}).status_code == 422
@@ -147,7 +147,7 @@ def test_waiver_eksekutif_butuh_cfo(c):
     d = c.get(f"/api/ar/receipt/{q[0]['id']}", headers=H("andi")).json()
     r = c.post(f"/api/ar/receipt/{d['id']}/confirm", headers=H("andi"),
                json={"unit_id": d["selected_unit"]["id"],
-                     "waiver": {"reason": "Kewenangan Eksekutif", "justification": "Pelanggan prioritas"}}).json()
+                     "waiver": {"reason": "Executive authority", "justification": "Priority customer"}}).json()
     assert r["penalty_status"] == "MENUNGGU_CFO"
     assert c.post(f"/api/cfo/waiver/{d['id']}", json={"approve": True}, headers=H("andi")).status_code == 403
     assert c.post(f"/api/cfo/waiver/{d['id']}", json={"approve": False, "reason": "tidak memenuhi syarat"},
@@ -171,10 +171,10 @@ def test_gemini_gagal_beralih_ke_pembaca_offline(c, monkeypatch):
     from app import extractor as ex
 
     def boom(pages):
-        raise RuntimeError("Kuota Gemini habis (429).")
+        raise RuntimeError("Gemini quota exhausted (429).")
 
     monkeypatch.setenv("GEMINI_MODE", "gemini")
     monkeypatch.setattr(ex, "_gemini", boom)
     t = upload(c, "05_kontrak_E_salah_hitung.pdf", "TRD2")
-    assert t["status"] != "GAGAL_PROSES" and t["fallback"].startswith("Kuota")
-    assert any("Beralih" in e["msg"] for e in t["telemetry"])
+    assert t["status"] != "GAGAL_PROSES" and t["fallback"].startswith("Gemini quota")
+    assert any("Switching" in e["msg"] for e in t["telemetry"])

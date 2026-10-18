@@ -7,11 +7,12 @@ import { SEV, Section, StatusChip } from '../components/bits'
 import { C } from '../theme'
 
 const ACTION_LABEL: Record<string, string> = {
-  UPLOAD: 'Unggah dokumen', PROCESSED: 'Diproses agen', OVERRIDE: 'Override nilai', SET_CONTRACT: 'Hubungkan kontrak',
-  POST: 'Setujui & posting', POST_ERP: 'Kirim ke ERP', SUBMIT_CFO: 'Ajukan ke CFO', CFO_APPROVE: 'CFO menyetujui',
-  CFO_REJECT: 'CFO menolak', CFO_UNLOCK: 'CFO membuka kunci', REJECT: 'Tolak', FLAG: 'Tandai dispute', RESEND: 'Kirim ulang',
-  RETRY: 'Proses ulang', UPLOAD_CSV: 'Unggah rekening koran', ALLOCATE: 'Alokasi penerimaan', RECALC_CHANGED: 'Hitung ulang berubah',
-  CFO_WAIVER_APPROVE: 'CFO setujui waiver', CFO_WAIVER_REJECT: 'CFO tolak waiver', SEED: 'Data awal',
+  UPLOAD: 'Upload document', PROCESSED: 'Processed by agents', OVERRIDE: 'Override value', SET_CONTRACT: 'Link contract',
+  POST: 'Approve & post', POST_ERP: 'Send to ERP', SUBMIT_CFO: 'Send to CFO', CFO_APPROVE: 'CFO approved',
+  CFO_REJECT: 'CFO rejected', CFO_UNLOCK: 'CFO unlocked', REJECT: 'Reject', FLAG: 'Flag dispute', RESEND: 'Resend',
+  RETRY: 'Reprocess', UPLOAD_CSV: 'Upload bank statement', ALLOCATE: 'Allocate payment', RECALC_CHANGED: 'Recalculation changed',
+  CFO_WAIVER_APPROVE: 'CFO approved waiver', CFO_WAIVER_REJECT: 'CFO rejected waiver', SEED: 'Seed data',
+  REGEMINI: 'Re-read by Gemini',
 }
 
 export default function Cfo() {
@@ -31,8 +32,8 @@ export default function Cfo() {
 
   const waiver = async (id: number, approve: boolean) => {
     try {
-      await api.post(`/cfo/waiver/${id}`, { approve, reason: approve ? 'Disetujui CFO' : 'Tidak memenuhi kebijakan waiver' })
-      setToast({ msg: approve ? 'Waiver disetujui; denda dihapus.' : 'Waiver ditolak; denda ditagihkan ke pembeli.' })
+      await api.post(`/cfo/waiver/${id}`, { approve, reason: approve ? 'Approved by CFO' : 'Does not meet the waiver policy' })
+      setToast({ msg: approve ? 'Waiver approved; late fee removed.' : 'Waiver rejected; late fee charged to the buyer.' })
       load()
     } catch (e) {
       setToast({ msg: (e as Error).message, err: true })
@@ -42,18 +43,18 @@ export default function Cfo() {
   if (!queue) return <LinearProgress />
   return (
     <Box>
-      <Typography variant="h1" sx={{ mb: 0.5 }}>Ruang CFO</Typography>
-      <Typography color="text.secondary" sx={{ mb: 3 }}>Keputusan yang hanya bisa diambil oleh Anda, jejak audit, dan akurasi agen.</Typography>
+      <Typography variant="h1" sx={{ mb: 0.5 }}>CFO room</Typography>
+      <Typography color="text.secondary" sx={{ mb: 3 }}>Decisions only you can make, the audit trail, and agent accuracy.</Typography>
 
-      <Section title="Menunggu keputusan Anda">
+      <Section title="Awaiting your decision">
         <Paper>
           <Table size="small">
-            <TableHead><TableRow><TableCell>Jenis</TableCell><TableCell>SPV</TableCell><TableCell>Referensi</TableCell>
-              <TableCell align="right">Nilai</TableCell><TableCell>Alasan</TableCell><TableCell>Status</TableCell><TableCell align="right" /></TableRow></TableHead>
+            <TableHead><TableRow><TableCell>Type</TableCell><TableCell>SPV</TableCell><TableCell>Reference</TableCell>
+              <TableCell align="right">Amount</TableCell><TableCell>Reason</TableCell><TableCell>Status</TableCell><TableCell align="right" /></TableRow></TableHead>
             <TableBody>
               {queue.map((q) => (
                 <TableRow key={q.kind + q.id}>
-                  <TableCell>{q.kind === 'AP' ? 'Tagihan' : 'Waiver denda'}</TableCell>
+                  <TableCell>{q.kind === 'AP' ? 'Bill' : 'Late-fee waiver'}</TableCell>
                   <TableCell>{q.spv}</TableCell>
                   <TableCell>{q.ref}</TableCell>
                   <TableCell align="right">{rp(q.amount)}</TableCell>
@@ -64,25 +65,25 @@ export default function Cfo() {
                   </TableCell>
                   <TableCell>{q.kind === 'AP' ? <StatusChip status={q.status} /> : <StatusChip status="MENUNGGU_CFO" />}</TableCell>
                   <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
-                    {q.kind === 'AP' ? <Button variant="outlined" size="small" onClick={() => nav(`/ap/${q.id}`)}>Tinjau</Button> : (
+                    {q.kind === 'AP' ? <Button variant="outlined" size="small" onClick={() => nav(`/ap/${q.id}`)}>Review</Button> : (
                       <>
-                        <Button size="small" onClick={() => waiver(q.id, true)}>Setujui</Button>
-                        <Button size="small" color="error" onClick={() => waiver(q.id, false)}>Tolak</Button>
+                        <Button size="small" onClick={() => waiver(q.id, true)}>Approve</Button>
+                        <Button size="small" color="error" onClick={() => waiver(q.id, false)}>Reject</Button>
                       </>)}
                   </TableCell>
                 </TableRow>
               ))}
-              {!queue.length && <TableRow><TableCell colSpan={7} sx={{ py: 3, textAlign: 'center', color: 'text.secondary' }}>Tidak ada yang menunggu keputusan Anda.</TableCell></TableRow>}
+              {!queue.length && <TableRow><TableCell colSpan={7} sx={{ py: 3, textAlign: 'center', color: 'text.secondary' }}>Nothing is waiting for your decision.</TableCell></TableRow>}
             </TableBody>
           </Table>
         </Paper>
       </Section>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 2fr' }, gap: 2 }}>
-        <Section title="Akurasi agen pembaca dokumen">
+        <Section title="Agent read accuracy">
           <Paper>
             <Table size="small">
-              <TableHead><TableRow><TableCell>Field</TableCell><TableCell align="right">Dokumen</TableCell><TableCell align="right">Dikoreksi</TableCell><TableCell align="right">Akurasi</TableCell></TableRow></TableHead>
+              <TableHead><TableRow><TableCell>Field</TableCell><TableCell align="right">Documents</TableCell><TableCell align="right">Corrected</TableCell><TableCell align="right">Accuracy</TableCell></TableRow></TableHead>
               <TableBody>
                 {acc.map((a) => (
                   <TableRow key={a.field}>
@@ -95,31 +96,31 @@ export default function Cfo() {
               </TableBody>
             </Table>
           </Paper>
-          <Typography variant="caption" color="text.secondary">Akurasi = field yang tidak dikoreksi manusia dibagi seluruh field yang dibaca.</Typography>
+          <Typography variant="caption" color="text.secondary">Accuracy = fields not corrected by a person, divided by all fields read.</Typography>
         </Section>
 
-        <Section title="Jejak audit"
+        <Section title="Audit trail"
           action={<>
-            <Button size="small" onClick={() => api.get('/audit/verify').then(setVerify)}>Verifikasi integritas</Button>
+            <Button size="small" onClick={() => api.get('/audit/verify').then(setVerify)}>Verify integrity</Button>
             <Button size="small" color="error" onClick={() => api.post('/demo/tamper').then(() => api.get('/audit/verify').then(setVerify))}>
-              Simulasi ubah data
+              Simulate tampering
             </Button>
           </>}>
           {verify && (
             <Alert severity={verify.ok ? 'success' : 'error'} sx={{ mb: 1 }}>
-              {verify.ok ? `Rantai hash utuh: ${verify.checked} entri terverifikasi.` :
-                `Rantai hash putus di entri #${verify.broken_at}. Data telah diubah di luar aplikasi.`}
+              {verify.ok ? `Hash chain intact: ${verify.checked} entries verified.` :
+                `Hash chain broken at entry #${verify.broken_at}. Data was changed outside the app.`}
             </Alert>)}
           <Paper sx={{ maxHeight: 460, overflowY: 'auto' }}>
             <Table size="small" stickyHeader>
-              <TableHead><TableRow><TableCell>Waktu</TableCell><TableCell>Pelaku</TableCell><TableCell>Aksi</TableCell><TableCell>Objek</TableCell><TableCell>Alasan</TableCell></TableRow></TableHead>
+              <TableHead><TableRow><TableCell>Time</TableCell><TableCell>Actor</TableCell><TableCell>Action</TableCell><TableCell>Object</TableCell><TableCell>Reason</TableCell></TableRow></TableHead>
               <TableBody>
                 {log.map((e) => (
                   <TableRow key={e.id} sx={{ bgcolor: verify && !verify.ok && verify.broken_at === e.id ? C.badSoft : undefined }}>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{dt(e.ts)}</TableCell>
                     <TableCell>{e.actor}</TableCell>
                     <TableCell>{ACTION_LABEL[e.action] ?? e.action}</TableCell>
-                    <TableCell>{e.entity === 'termin' ? `Tagihan #${e.entity_id}` : e.entity === 'receipt' ? (e.entity_id ? `Penerimaan #${e.entity_id}` : 'Rekening koran') : e.entity}
+                    <TableCell>{e.entity === 'termin' ? `Bill #${e.entity_id}` : e.entity === 'receipt' ? (e.entity_id ? `Payment #${e.entity_id}` : 'Bank statement') : e.entity}
                       {e.after?.status ? `: ${STATUS[e.after.status]?.label ?? e.after.status}` : ''}</TableCell>
                     <TableCell sx={{ color: 'text.secondary' }}>{e.reason}</TableCell>
                   </TableRow>

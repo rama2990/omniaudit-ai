@@ -71,7 +71,7 @@
     {
      "do": "cfo_reject",
      "by": "hartono",
-     "reason": "Double billing dengan INV/BKM/2026/077 di TRD2"
+     "reason": "Double billing with INV/BKM/2026/077 in TRD2"
     }
    ],
    "final": {
@@ -120,7 +120,7 @@
     {
      "do": "reject",
      "by": "dewi",
-     "reason": "Rincian pekerjaan tidak sama dengan total tagihan; vendor diminta merevisi invoice."
+     "reason": "Line items do not add up to the total; vendor asked to revise the invoice."
     }
    ],
    "final": {
@@ -250,7 +250,7 @@
      "by": "dewi",
      "field": "progres_klaim",
      "value": "37",
-     "reason": "Invoice menulis progres termin (7%); kumulatif = 30% + 7% = 37%"
+     "reason": "Invoice states this period only (7%); cumulative = 30% + 7% = 37%"
     },
     {
      "do": "post",
@@ -280,7 +280,7 @@
      "do": "set_contract",
      "by": "dewi",
      "contract": "SPK/TRD/2026/003",
-     "reason": "SPK-TRD-03/2026 adalah penomoran internal vendor untuk SPK/TRD/2026/003"
+     "reason": "SPK-TRD-03/2026 is the vendor numbering for SPK/TRD/2026/003"
     },
     {
      "do": "post",
@@ -338,8 +338,8 @@
      "status": "RECOMMENDED",
      "unit": "C1-02",
      "waiver": [
-      "Pencairan KPR Bank",
-      "Menunggu pencairan KPR Bank BTN"
+      "Mortgage disbursement",
+      "Waiting for BTN mortgage disbursement"
      ],
      "penalty": "WAIVED"
     },
@@ -376,8 +376,8 @@
      "status": "RECOMMENDED",
      "unit": "A-10-03",
      "waiver": [
-      "Kewenangan Eksekutif",
-      "Pembeli VIP, pemilik 3 unit di Tower A"
+      "Executive authority",
+      "VIP buyer, owns 3 units in Tower A"
      ],
      "penalty": "MENUNGGU_CFO",
      "cfo": {
@@ -436,8 +436,8 @@
      "status": "RECOMMENDED",
      "unit": "G1-02",
      "waiver": [
-      "Pencairan KPR Bank",
-      "KPR Bank Mandiri cair 20 Oktober"
+      "Mortgage disbursement",
+      "Mandiri mortgage disburses on 20 October"
      ],
      "penalty": "WAIVED"
     },

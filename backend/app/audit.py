@@ -42,7 +42,7 @@ class AuditContext:
 
 def pct_id(x: Decimal) -> str:
     """0.8 -> '80%', 0.0175 -> '1,75%'."""
-    return f"{x * 100:.2f}".rstrip("0").rstrip(".").replace(".", ",") + "%"
+    return f"{x * 100:.2f}".rstrip("0").rstrip(".") + "%"
 
 
 def norm_invoice(s: str) -> str:
@@ -58,42 +58,42 @@ def run_rules(c: AuditContext) -> list[Anomaly]:
     out: list[Anomaly] = []
     add = lambda code, sev, msg: out.append(Anomaly(code, sev, msg))  # noqa: E731
     if not c.contract_found:
-        add("KONTRAK_TIDAK_DITEMUKAN", "HIGH", "Kontrak tidak ditemukan di SPV ini. Pilih Kontrak secara manual.")
+        add("KONTRAK_TIDAK_DITEMUKAN", "HIGH", "Contract not found in this SPV. Link the contract manually.")
     if c.duplicate == "OTHER_SPV":
-        add("KLAIM_GANDA", "CRITICAL", "Nomor invoice + NPWP yang sama ditemukan di SPV lain (indikasi double-billing).")
+        add("KLAIM_GANDA", "CRITICAL", "The same invoice number and tax ID exist in another SPV (possible double billing).")
     elif c.duplicate == "SAME_SPV":
-        add("KLAIM_GANDA", "HIGH", "Nomor invoice + NPWP yang sama sudah pernah diajukan di SPV ini.")
+        add("KLAIM_GANDA", "HIGH", "The same invoice number and tax ID were already submitted in this SPV.")
     k, b = c.progres_klaim, c.progres_bap
     if k is not None and b is not None and k > b:
-        add("OVERBILLING", "HIGH", f"Progres Klaim {pct_id(k)} melebihi Progres BAP {pct_id(b)}. Dihitung ulang memakai Progres BAP.")
+        add("OVERBILLING", "HIGH", f"Claimed progress {pct_id(k)} exceeds inspected progress {pct_id(b)}. Recalculated using inspected progress.")
     if c.retensi_tertulis is None or c.retensi_tertulis == 0:
-        add("OMISI_RETENSI", "MEDIUM", "Invoice tidak mencantumkan Retensi. Retensi tetap dipotong sesuai Kontrak.")
+        add("OMISI_RETENSI", "MEDIUM", "The invoice does not state retention. Retention is still deducted per the contract.")
     if c.line_items_sum is not None and c.ppn_tertulis is not None and c.bruto_tertulis is not None \
             and abs(c.line_items_sum + c.ppn_tertulis - c.bruto_tertulis) > 1:
-        add("MATEMATIKA", "HIGH", f"Jumlah line item + PPN ({c.line_items_sum + c.ppn_tertulis:,.0f}) "
-                                  f"tidak sama dengan Bruto Tertulis ({_rp(c.bruto_tertulis)}).")
+        add("MATEMATIKA", "HIGH", f"Line items plus VAT ({_rp(c.line_items_sum + c.ppn_tertulis)}) "
+                                  f"do not equal the stated gross amount ({_rp(c.bruto_tertulis)}).")
     if c.bruto_tertulis is not None and c.bruto_klaim_calc is not None \
             and abs(c.bruto_tertulis - c.bruto_klaim_calc) > 1000:
-        add("NILAI_TIDAK_SESUAI_PROGRES", "HIGH", f"Bruto Tertulis {_rp(c.bruto_tertulis)} tidak sesuai nilai "
-                                                  f"Progres Klaim ({_rp(c.bruto_klaim_calc)}).")
+        add("NILAI_TIDAK_SESUAI_PROGRES", "HIGH", f"Stated gross amount {_rp(c.bruto_tertulis)} does not match the value of "
+                                                  f"the claimed progress ({_rp(c.bruto_klaim_calc)}).")
     if c.pph_tertulis_rate is not None and c.pph_master is not None and c.pph_tertulis_rate != c.pph_master:
-        add("PAJAK_SBU", "MEDIUM", f"Tarif PPh di invoice {pct_id(c.pph_tertulis_rate)} tidak sesuai SBU Vendor "
-                                   f"({pct_id(c.pph_master)}). Dipakai tarif master.")
+        add("PAJAK_SBU", "MEDIUM", f"Withholding tax rate on the invoice ({pct_id(c.pph_tertulis_rate)}) does not match the vendor grade "
+                                   f"({pct_id(c.pph_master)}). The master rate is used.")
     if not c.faktur_found:
-        add("FAKTUR_PAJAK", "MEDIUM", "Faktur Pajak tidak ditemukan. PPN Masukan belum dapat dikreditkan.")
+        add("FAKTUR_PAJAK", "MEDIUM", "No tax invoice found. Input VAT cannot be credited yet.")
     else:
         if c.faktur_ppn is not None and c.ppn_klaim_calc is not None and abs(c.faktur_ppn - c.ppn_klaim_calc) > 1:
-            add("FAKTUR_PAJAK", "MEDIUM", "PPN di Faktur Pajak tidak sama dengan PPN hitungan. PPN Masukan belum dapat dikreditkan.")
+            add("FAKTUR_PAJAK", "MEDIUM", "VAT on the tax invoice differs from the calculated VAT. Input VAT cannot be credited yet.")
         if c.faktur_npwp and c.vendor_npwp and norm_npwp(c.faktur_npwp) != norm_npwp(c.vendor_npwp):
-            add("FAKTUR_PAJAK", "MEDIUM", "NPWP penjual di Faktur Pajak berbeda dari NPWP Vendor.")
+            add("FAKTUR_PAJAK", "MEDIUM", "The seller tax ID on the tax invoice differs from the vendor tax ID.")
     if k is not None and k <= c.progres_prev:
-        add("TERMIN_TIDAK_VALID", "HIGH", "Progres Klaim tidak melebihi Progres Sebelumnya (kemungkinan progres inkremental).")
+        add("TERMIN_TIDAK_VALID", "HIGH", "Claimed progress is not above previous progress (possibly incremental progress).")
     if (k is not None and k > 1) or (b is not None and b > 1):
-        add("TERMIN_TIDAK_VALID", "HIGH", "Progres melebihi 100%.")
+        add("TERMIN_TIDAK_VALID", "HIGH", "Progress exceeds 100%.")
     if c.other_open_termin:
-        add("TERMIN_TIDAK_VALID", "HIGH", "Termin sebelumnya pada Kontrak ini belum diposting.")
+        add("TERMIN_TIDAK_VALID", "HIGH", "A previous bill on this contract has not been posted yet.")
     if c.pen_left_at_full:
-        add("TERMIN_TIDAK_VALID", "HIGH", "Progres 100% tetapi masih ada Denda Tertunggak yang belum terpotong.")
+        add("TERMIN_TIDAK_VALID", "HIGH", "Progress is 100% but an outstanding late penalty has not been deducted.")
     return out
 
 
@@ -139,8 +139,8 @@ ALLOWED = {
 def transition(status: str, action: str, role: str) -> str:
     rule = ALLOWED.get((status, action))
     if rule is None:
-        raise InvalidTransition(f"Aksi {action} tidak berlaku untuk status {status}")
+        raise InvalidTransition(f"Action {action} is not allowed in status {status}")
     roles, target = rule
     if role not in roles:
-        raise Forbidden(f"Peran {role} tidak boleh melakukan {action}")
+        raise Forbidden(f"Role {role} may not perform {action}")
     return target

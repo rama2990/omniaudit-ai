@@ -36,7 +36,7 @@ VENDOR = {
     "IBP": Party("PT Integra Bangun Persada", "67.890.123.4-560.005", "Jl. TB Simatupang Kav. 9, Jakarta Selatan",
                  "Design & Build Contractor", "CIMB Niaga 800-12-3456-7 a.n. PT Integra Bangun Persada", "Lukas Pranata", "Direktur"),
 }
-R = "Rincian pekerjaan tidak sama dengan total tagihan; vendor diminta merevisi invoice."
+R = "Line items do not add up to the total; vendor asked to revise the invoice."
 
 
 def _doc(style, vendor, spv, inv, ref, tgl, proyek, termin, progres, items, ppn, bruto, bap, ret, pph, faktur_um=0,
@@ -78,7 +78,7 @@ def ap_steps() -> list[dict]:
                       [("Pekerjaan jalan & saluran tahap 2 (20% s.d. 35%)", 450_000_000, "")],
                       49_500_000, 499_500_000, "35", 22_500_000, ("2,65", 11_925_000)),
              expect={"status": "HARD_STOP", "codes": ["KLAIM_GANDA"]},
-             actions=[{"do": "cfo_reject", "by": "hartono", "reason": "Double billing dengan INV/BKM/2026/077 di TRD2"}],
+             actions=[{"do": "cfo_reject", "by": "hartono", "reason": "Double billing with INV/BKM/2026/077 in TRD2"}],
              final={"status": "REJECTED"}),
         dict(id="FR-04", hari="Selasa 13 Okt", persona="dewi", spv="TRD2", file="FR-04_BJA_kontrak-C_termin-2_retensi-pph.pdf",
              judul="Retensi tidak dicantumkan, tarif PPh tidak sesuai SBU (tetap hijau, badge kuning)",
@@ -142,7 +142,7 @@ def ap_steps() -> list[dict]:
                       38_500_000, 388_500_000, "37", 17_500_000, ("2,65", 9_275_000), inkremental=True),
              expect={"status": "DISPUTE", "codes_any": ["TERMIN_TIDAK_VALID"]},
              actions=[{"do": "override", "by": "dewi", "field": "progres_klaim", "value": "37",
-                       "reason": "Invoice menulis progres termin (7%); kumulatif = 30% + 7% = 37%"},
+                       "reason": "Invoice states this period only (7%); cumulative = 30% + 7% = 37%"},
                       {"do": "post", "by": "dewi"}],
              final={"status": "POSTED", "net": 361_725_000}),
         dict(id="FR-11", hari="Jumat 16 Okt", persona="dewi", spv="TRD2", file="FR-11_BJA_kontrak-C_nomor-kontrak-salah-tulis.pdf",
@@ -153,7 +153,7 @@ def ap_steps() -> list[dict]:
                       44_000_000, 444_000_000, "40", 20_000_000, ("4,00", 16_000_000)),
              expect={"status": "DISPUTE", "codes": ["KONTRAK_TIDAK_DITEMUKAN"]},
              actions=[{"do": "set_contract", "by": "dewi", "contract": "SPK/TRD/2026/003",
-                       "reason": "SPK-TRD-03/2026 adalah penomoran internal vendor untuk SPK/TRD/2026/003"},
+                       "reason": "SPK-TRD-03/2026 is the vendor numbering for SPK/TRD/2026/003"},
                       {"do": "post", "by": "dewi"}],
              final={"status": "POSTED", "net": 408_000_000}),
         dict(id="FR-12", hari="Jumat 16 Okt", persona="dewi", spv="SLO1", file="FR-12_BKM_kontrak-A_denda-menelan-termin.pdf",
@@ -221,7 +221,7 @@ def ar_steps(s, units: dict[str, list[Unit]], demo_dir: Path) -> list[dict]:
              expect={"rows": 29, "auto": 6, "recommended": 19, "manual": 4, "duplicates": 1},
              decisions=[
                  {"memo": sut, "status": "RECOMMENDED", "unit": "C1-02",
-                  "waiver": ["Pencairan KPR Bank", "Menunggu pencairan KPR Bank BTN"], "penalty": "WAIVED"},
+                  "waiver": ["Mortgage disbursement", "Waiting for BTN mortgage disbursement"], "penalty": "WAIVED"},
                  {"memo": "TRF HENDRA GUNAWAN CLUSTER C1", "status": "MANUAL_REVIEW", "unit": "C1-03",
                   "note": "Dua unit milik pembeli yang sama; Andi memilih C1-03 sesuai konfirmasi telepon"},
                  {"memo": "PEMBAYARAN UNIT C1 08", "status": "RECOMMENDED", "unit": "C1-08"},
@@ -231,7 +231,7 @@ def ar_steps(s, units: dict[str, list[Unit]], demo_dir: Path) -> list[dict]:
              expect={"rows": 8, "auto": 0, "recommended": 6, "manual": 2, "duplicates": 0},
              decisions=[
                  {"memo": "TWR A 10/03 ANGS OKT", "status": "RECOMMENDED", "unit": trd[2].code,
-                  "waiver": ["Kewenangan Eksekutif", "Pembeli VIP, pemilik 3 unit di Tower A"], "penalty": "MENUNGGU_CFO",
+                  "waiver": ["Executive authority", "VIP buyer, owns 3 units in Tower A"], "penalty": "MENUNGGU_CFO",
                   "cfo": {"by": "hartono", "approve": True, "penalty": "WAIVED"}},
                  {"memo": "CICILAN A-11-01 SEBAGIAN", "status": "RECOMMENDED", "unit": trd[4].code, "settled": False},
                  {"memo": "UNIT A 11 03", "status": "RECOMMENDED", "unit": trd[6].code},
@@ -245,7 +245,7 @@ def ar_steps(s, units: dict[str, list[Unit]], demo_dir: Path) -> list[dict]:
              expect={"rows": 8, "auto": 0, "recommended": 7, "manual": 1, "duplicates": 0},
              decisions=[
                  {"memo": "BLOK G1 NO 2 KPR", "status": "RECOMMENDED", "unit": gct[1].code,
-                  "waiver": ["Pencairan KPR Bank", "KPR Bank Mandiri cair 20 Oktober"], "penalty": "WAIVED"},
+                  "waiver": ["Mortgage disbursement", "Mandiri mortgage disburses on 20 October"], "penalty": "WAIVED"},
                  {"memo": "VA PAYMENT", "status": "RECOMMENDED", "unit": gct[3].code, "penalty": "DITAGIH"},
                  {"memo": "G1/06 TRF", "status": "RECOMMENDED", "unit": gct[5].code, "selisih": 150_000},
                  {"memo": "ANGS OKT NOV G1-09", "status": "RECOMMENDED", "unit": gct[8].code},

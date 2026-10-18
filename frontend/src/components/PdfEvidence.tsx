@@ -9,10 +9,10 @@ export type EvidenceBox = { key: string; page: number; bbox: number[]; tone: 'ok
 type PageMeta = { n: number; width: number; height: number; type?: string; source?: string }
 
 const PAGE_LABEL: Record<string, string> = {
-  INVOICE: 'Invoice', BAP: 'Berita Acara Pemeriksaan', FAKTUR_PAJAK: 'Faktur Pajak', FOTO_PROGRES: 'Foto progres', LAIN: 'Lainnya',
+  INVOICE: 'Invoice', BAP: 'Site inspection report (BAP)', FAKTUR_PAJAK: 'Tax invoice', FOTO_PROGRES: 'Progress photos', LAIN: 'Other',
 }
 
-/** PDF asli dengan kotak sorotan pada koordinat OCR. Kotak yang sedang difokus digulir ke tengah. */
+/** Original PDF with highlight boxes at the OCR coordinates. The focused box is scrolled to the center. */
 export default function PdfEvidence({ url, pages, boxes, focus, onFocus }: {
   url: string; pages: PageMeta[]; boxes: EvidenceBox[]; focus: string | null; onFocus: (k: string) => void
 }) {
@@ -34,15 +34,15 @@ export default function PdfEvidence({ url, pages, boxes, focus, onFocus }: {
 
   return (
     <Box ref={wrap} sx={{ height: '100%', overflowY: 'auto', bgcolor: '#E8EAED', p: 1.5 }}>
-      <Document file={url} loading={<Typography sx={{ p: 2 }}>Memuat dokumen…</Typography>}
-        error={<Typography sx={{ p: 2 }} color="error">Dokumen tidak bisa ditampilkan.</Typography>}>
+      <Document file={url} loading={<Typography sx={{ p: 2 }}>Loading document…</Typography>}
+        error={<Typography sx={{ p: 2 }} color="error">The document can't be displayed.</Typography>}>
         {pages.map((pg) => {
           const scale = w / pg.width
           return (
             <Box key={pg.n} sx={{ mb: 2 }}>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                Halaman {pg.n}{pg.type ? `: ${PAGE_LABEL[pg.type] ?? pg.type}` : ''}
-                {pg.source === 'scan' ? ' (hasil scan, dibaca OCR lokal)' : ''}
+                Page {pg.n}{pg.type ? `: ${PAGE_LABEL[pg.type] ?? pg.type}` : ''}
+                {pg.source === 'scan' ? ' (scanned, read by local OCR)' : ''}
               </Typography>
               <Box sx={{ position: 'relative', width: w, boxShadow: '0 1px 3px rgba(60,64,67,.3)' }}>
                 <Page pageNumber={pg.n} width={w} renderTextLayer={false} renderAnnotationLayer={false} />

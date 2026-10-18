@@ -1,6 +1,6 @@
 import { createTheme } from '@mui/material/styles'
 
-// Palet Google/Material: biru untuk aksi, hijau/kuning/merah hanya untuk status.
+// Google/Material palette: blue for actions, green/yellow/red only for status.
 export const C = {
   blue: '#1A73E8',
   blueSoft: '#E8F0FE',

@@ -20,6 +20,10 @@ from app.ocr import ocr_pdf
 
 D = Decimal
 TELEMETRY: dict[int, list[dict]] = {}
+JENIS_EN = {"PELAKSANAAN": "construction", "TERINTEGRASI": "integrated", "PERENCANAAN": "design",
+            "PENGAWASAN": "supervision"}
+SBU_EN = {"KECIL": "small", "MENENGAH": "medium", "BESAR": "large", "TANPA": "no grade"}
+STATUS_EN = {"READY": "ready to approve", "DISPUTE": "dispute", "HARD_STOP": "hard stop"}
 FINAL = ("POSTED", "REJECTED")
 
 
@@ -124,61 +128,61 @@ def process_termin(tid: int, ext: dict | None = None):
         TELEMETRY[tid] = []
         try:
             if not t.pages:
-                publish(tid, "Parser Agent", "Menjalankan OCR lokal pada dokumen…")
+                publish(tid, "Parser Agent", "Running local OCR on the document…")
                 t.pages = ocr_pdf(t.pdf_path)
             for p in t.pages:
-                src = {"digital": "teks digital", "scan": "hasil scan (RapidOCR)", "unreadable": "TIDAK TERBACA"}
-                publish(tid, "Parser Agent", f"Halaman {p['n']}: {len(p['words'])} kata, {src[p['source']]}",
+                src = {"digital": "digital text", "scan": "scanned (RapidOCR)", "unreadable": "UNREADABLE"}
+                publish(tid, "Parser Agent", f"Page {p['n']}: {len(p['words'])} words, {src[p['source']]}",
                         "warn" if p["source"] == "unreadable" else "info")
             m = extractor.mode()
-            publish(tid, "Parser Agent", f"Mengirim teks OCR ke Gemini ({os.getenv('GEMINI_MODEL', 'gemini-flash-latest')})…"
-                    if m == "gemini" else "Mode offline: ekstraksi dengan pola teks lokal")
+            publish(tid, "Parser Agent", f"Sending OCR text to Gemini ({os.getenv('GEMINI_MODEL', 'gemini-flash-latest')})…"
+                    if m == "gemini" else "Offline mode: extracting with local text patterns")
             try:
                 t.extraction = ext or extractor.extract(t.pages)
             except RuntimeError as e:
                 if m != "gemini" or os.getenv("GEMINI_FALLBACK", "1") == "0":
                     raise
-                publish(tid, "Parser Agent", f"{e} Beralih ke pembaca pola teks lokal.", "warn")
+                publish(tid, "Parser Agent", f"{e} Switching to the local text-pattern reader.", "warn")
                 t.extraction = extractor.extract_offline(t.pages, str(e))
-            types = ", ".join(f"h{k}={v}" for k, v in sorted(t.extraction["page_types"].items()))
-            publish(tid, "Parser Agent", f"Klasifikasi halaman: {types}")
+            types = ", ".join(f"p{k}={v}" for k, v in sorted(t.extraction["page_types"].items()))
+            publish(tid, "Parser Agent", f"Page types: {types}")
             for n in extractor.WAJIB:
                 f = t.extraction["fields"][n]
                 if f.get("grounded"):
-                    publish(tid, "Parser Agent", f"{n} = {f['value']} (keyakinan {f['confidence']:.0%})")
+                    publish(tid, "Parser Agent", f"{n} = {f['value']} (confidence {f['confidence']:.0%})")
                 else:
-                    publish(tid, "Parser Agent", f"{n}: tidak ditemukan / tidak berlabuh ke teks OCR → keyakinan 0", "warn")
+                    publish(tid, "Parser Agent", f"{n}: not found or not grounded in the OCR text, confidence 0", "warn")
 
             anoms, conf = evaluate(s, t)
             c = s.get(Contract, t.contract_id) if t.contract_id else None
             if c:
                 terms, v = terms_of(s, c)
                 hist, prev = history(s, c.id, exclude=t.id)
-                publish(tid, "Contract Agent", f"Kontrak {c.no} ditemukan: {c.name}, DPP Kontrak {fmt_rp(c.dpp_kontrak)}")
-                publish(tid, "Contract Agent", f"Vendor {v.name}: {v.jenis.title()} SBU {v.sbu.title()} → PPh 4(2) "
-                                               f"{terms.pph_rate * 100:.2f}%. Retensi {D(c.ret_pct):.0%}, "
-                                               f"Uang Muka {D(c.um_pct):.0%}, Progres Sebelumnya {prev:.0%}")
+                publish(tid, "Contract Agent", f"Contract {c.no} found: {c.name}, value excl. VAT {fmt_rp(c.dpp_kontrak)}")
+                publish(tid, "Contract Agent", f"Vendor {v.name}: {JENIS_EN[v.jenis]}, grade {SBU_EN[v.sbu]}, withholding tax "
+                                               f"{terms.pph_rate * 100:.2f}%. Retention {D(c.ret_pct):.0%}, "
+                                               f"down payment {D(c.um_pct):.0%}, previous progress {prev:.0%}")
             else:
-                publish(tid, "Contract Agent", "Kontrak tidak ditemukan di SPV ini", "warn")
+                publish(tid, "Contract Agent", "Contract not found in this SPV", "warn")
             if anoms:
                 for a in anoms:
                     publish(tid, "Adversarial Auditor", f"[{a.severity}] {a.message}",
                             "error" if a.severity != "MEDIUM" else "warn")
             else:
-                publish(tid, "Adversarial Auditor", "Tidak ada anomali.")
+                publish(tid, "Adversarial Auditor", "No anomalies found.")
             if t.calc_verified:
                 cc, cv = calc_from(t.calc_claim), calc_from(t.calc_verified)
-                publish(tid, "Mesin Kalkulasi", f"Net Payable klaim {fmt_rp(cc.net)} → terverifikasi {fmt_rp(cv.net)}"
-                                                f" (selisih {fmt_rp(cc.net - cv.net)})")
+                publish(tid, "Calculator", f"Net payable claimed {fmt_rp(cc.net)}, verified {fmt_rp(cv.net)}"
+                                                f" (difference {fmt_rp(cc.net - cv.net)})")
             t.status = decide_status(anoms, conf)
-            publish(tid, "Sistem", f"Skor Kepastian {conf:.0%} → status {t.status}"
-                                   + (" · butuh persetujuan CFO" if t.status == "DISPUTE" and t.needs_cfo else ""))
+            publish(tid, "System", f"Confidence {conf:.0%}, status: {STATUS_EN.get(t.status, t.status)}"
+                                   + (", needs CFO approval" if t.status == "DISPUTE" and t.needs_cfo else ""))
             t.processed_at = now()
             t.error = None
         except Exception as e:  # noqa: BLE001
             traceback.print_exc()
             t.status, t.error = "GAGAL_PROSES", str(e)[:500]
-            publish(tid, "Sistem", f"Gagal memproses: {t.error}", "error")
+            publish(tid, "System", f"Processing failed: {t.error}", "error")
         t.telemetry = list(TELEMETRY[tid])
         auditlog.record(s, actor="system", role="SYSTEM", spv_id=t.spv_id, action="PROCESSED", entity="termin",
                         entity_id=t.id, after={"status": t.status, "confidence": t.confidence,
@@ -194,11 +198,11 @@ def post(s: Session, t: Termin, actor: str, role: str) -> str:
     before = dict(t.calc_verified)
     evaluate(s, t)
     if not t.calc_verified:
-        raise ValueError("Kalkulasi belum lengkap (kontrak/progres belum ada)")
+        raise ValueError("Calculation incomplete (contract or progress missing)")
     if before and before != t.calc_verified:
         t.status = "DISPUTE"
         auditlog.record(s, actor=actor, role=role, spv_id=t.spv_id, action="RECALC_CHANGED", entity="termin",
-                        entity_id=t.id, before=before, after=t.calc_verified, reason="Baseline berubah sebelum posting")
+                        entity_id=t.id, before=before, after=t.calc_verified, reason="Baseline changed before posting")
         return t.status
     lines = [{"side": l.side, "account": l.account, "amount": int(l.amount)}
              for l in ap_journal(calc_from(t.calc_verified))]

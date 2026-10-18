@@ -33,24 +33,24 @@ def db():
 def me(x_persona: str = Header(...), s: Session = Depends(db)) -> Persona:
     p = s.get(Persona, x_persona)
     if not p:
-        raise HTTPException(401, "Persona tidak dikenal")
+        raise HTTPException(401, "Unknown persona")
     return p
 
 
 def can_see(p: Persona, spv_id: str):
     if p.role != CFO and spv_id not in p.spvs:
-        raise HTTPException(403, "SPV ini di luar penugasan Anda")
+        raise HTTPException(403, "This SPV is outside your assignment")
 
 
 def need_role(p: Persona, *roles: str):
     if p.role not in roles:
-        raise HTTPException(403, "Peran Anda tidak berhak melakukan aksi ini")
+        raise HTTPException(403, "Your role is not allowed to do this")
 
 
 def scope(p: Persona, spv: str | None) -> list[str]:
     if spv in (None, "", "ALL"):
         if p.role != CFO:
-            raise HTTPException(403, "Hanya CFO yang dapat melihat Semua SPV")
+            raise HTTPException(403, "Only the CFO can view all SPVs")
         return list(p.spvs)
     can_see(p, spv)
     return [spv]
@@ -133,7 +133,7 @@ def ap_upload(bg: BackgroundTasks, spv: str = Form(...), file: UploadFile = File
     need_role(p, AP)
     can_see(p, spv)
     if not (file.filename or "").lower().endswith(".pdf"):
-        raise HTTPException(400, "Hanya file PDF yang diterima")
+        raise HTTPException(400, "Only PDF files are accepted")
     t = Termin(spv_id=spv, filename=file.filename, uploaded_by=p.id)
     s.add(t)
     s.flush()
@@ -143,18 +143,18 @@ def ap_upload(bg: BackgroundTasks, spv: str = Form(...), file: UploadFile = File
         shutil.copyfileobj(file.file, f)
     if dest.stat().st_size > 25 * 1024 * 1024:
         dest.unlink()
-        raise HTTPException(400, "Ukuran file melebihi 25 MB")
+        raise HTTPException(400, "File is larger than 25 MB")
     import pymupdf
     try:
         with pymupdf.open(dest) as doc:
             if doc.page_count > 30:
-                raise HTTPException(400, "Maksimal 30 halaman")
+                raise HTTPException(400, "At most 30 pages")
     except HTTPException:
         dest.unlink()
         raise
     except Exception:
         dest.unlink()
-        raise HTTPException(400, "File PDF rusak atau tidak bisa dibaca")
+        raise HTTPException(400, "The PDF is damaged or unreadable")
     t.pdf_path = str(dest)
     auditlog.record(s, actor=p.id, role=p.role, spv_id=spv, action="UPLOAD", entity="termin", entity_id=t.id,
                     after={"filename": file.filename})
@@ -174,7 +174,7 @@ ANOMALY_FIELDS = {
 def _termin(s: Session, tid: int, p: Persona) -> Termin:
     t = s.get(Termin, tid)
     if not t:
-        raise HTTPException(404, "Termin tidak ditemukan")
+        raise HTTPException(404, "Bill not found")
     can_see(p, t.spv_id)
     return t
 
@@ -251,7 +251,7 @@ def termin_detail(tid: int, p: Persona = Depends(me), s: Session = Depends(db)):
 def termin_pdf(tid: int, x_persona: str | None = Header(None), persona: str | None = None, s: Session = Depends(db)):
     p = s.get(Persona, x_persona or persona or "")
     if not p:
-        raise HTTPException(401, "Persona tidak dikenal")
+        raise HTTPException(401, "Unknown persona")
     t = _termin(s, tid, p)
     return FileResponse(t.pdf_path, media_type="application/pdf")
 
@@ -261,7 +261,7 @@ async def termin_events(tid: int, persona: str):
     with session() as s:
         p = s.get(Persona, persona)
         if not p:
-            raise HTTPException(401, "Persona tidak dikenal")
+            raise HTTPException(401, "Unknown persona")
         _termin(s, tid, p)
 
     async def gen():
@@ -298,29 +298,29 @@ def termin_action(tid: int, body: ApAction, bg: BackgroundTasks, p: Persona = De
     if a in ("override", "set_contract"):
         need_role(p, AP)
         if t.status not in ("READY", "DISPUTE"):
-            raise HTTPException(409, "Termin tidak bisa diubah pada status ini")
+            raise HTTPException(409, "The bill cannot be changed in this status")
         if len(body.reason.strip()) < 10:
-            raise HTTPException(422, "Alasan Override wajib diisi (minimal 10 karakter)")
+            raise HTTPException(422, "An override reason is required (at least 10 characters)")
         if a == "set_contract":
             c = s.get(Contract, body.contract_id or 0)
             if not c or c.spv_id != t.spv_id:
-                raise HTTPException(422, "Kontrak tidak ditemukan di SPV ini")
+                raise HTTPException(422, "Contract not found in this SPV")
             before["contract_id"], t.contract_id = t.contract_id, c.id
         else:
             name = body.field or ""
             if name not in extractor.WAJIB + extractor.OPSIONAL + ["progres_disetujui"]:
-                raise HTTPException(422, "Field tidak dikenal")
+                raise HTTPException(422, "Unknown field")
             if name == "progres_disetujui":
                 k, b = pipeline.get(t, "progres_klaim"), pipeline.get(t, "progres_bap")
                 try:
                     val = D(str(body.value).replace(",", "."))
                 except Exception:
-                    raise HTTPException(422, "Nilai progres tidak valid")
+                    raise HTTPException(422, "Invalid progress value")
                 if k is not None and b is not None and val > min(k, b):
-                    raise HTTPException(422, "Progres Disetujui tidak boleh melebihi min(Progres Klaim, Progres BAP)")
+                    raise HTTPException(422, "Approved progress cannot exceed the lower of claimed and inspected progress")
                 body.value = str(val)
             elif extractor.parse(extractor.KIND[name], body.value) is None:
-                raise HTTPException(422, "Format nilai tidak valid")
+                raise HTTPException(422, "Invalid value format")
             before[name] = t.overrides.get(name) or (t.extraction["fields"].get(name) or {}).get("value")
             t.overrides = {**t.overrides, name: body.value}
         pipeline.evaluate(s, t)
@@ -338,11 +338,11 @@ def termin_action(tid: int, body: ApAction, bg: BackgroundTasks, p: Persona = De
     except InvalidTransition as e:
         raise HTTPException(409, str(e))
     if a in ("reject", "cfo_reject", "flag", "cfo_unlock") and len(body.reason.strip()) < 10:
-        raise HTTPException(422, "Alasan wajib diisi (minimal 10 karakter)")
+        raise HTTPException(422, "A reason is required (at least 10 characters)")
     if t.status == "DISPUTE" and a == "post" and t.needs_cfo:
-        raise HTTPException(409, "Nilai klaim > Rp500 jt: ajukan ke CFO")
+        raise HTTPException(409, "Claim above IDR 500 million: send to the CFO")
     if a == "submit_cfo" and not t.needs_cfo:
-        raise HTTPException(409, "Termin ini tidak membutuhkan persetujuan CFO")
+        raise HTTPException(409, "This bill does not need CFO approval")
     if target == "POST":
         try:
             pipeline.post(s, t, p.id, p.role)
@@ -376,7 +376,7 @@ async def ar_upload(spv: str = Form(...), file: UploadFile = File(...), p: Perso
     try:
         stats = ar.ingest_csv(s, spv, (await file.read()).decode("utf-8-sig"), p.id, p.role)
     except (ValueError, KeyError) as e:
-        raise HTTPException(400, f"CSV tidak valid: {e}")
+        raise HTTPException(400, f"Invalid CSV: {e}")
     s.commit()
     return stats
 
@@ -384,7 +384,7 @@ async def ar_upload(spv: str = Form(...), file: UploadFile = File(...), p: Perso
 def _receipt(s: Session, rid: int, p: Persona) -> Receipt:
     r = s.get(Receipt, rid)
     if not r:
-        raise HTTPException(404, "Penerimaan tidak ditemukan")
+        raise HTTPException(404, "Payment not found")
     can_see(p, r.spv_id)
     return r
 
