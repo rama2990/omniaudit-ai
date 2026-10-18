@@ -165,3 +165,16 @@ def test_dashboard(c):
     d = c.get("/api/dashboard?spv=ALL", headers=H("hartono")).json()
     assert d["unallocated_ar"] > 0 and d["flagged"] >= 1 and d["velocity_min"] is not None
     assert d["leakage_prevented"] > 0
+
+
+def test_gemini_gagal_beralih_ke_pembaca_offline(c, monkeypatch):
+    from app import extractor as ex
+
+    def boom(pages):
+        raise RuntimeError("Kuota Gemini habis (429).")
+
+    monkeypatch.setenv("GEMINI_MODE", "gemini")
+    monkeypatch.setattr(ex, "_gemini", boom)
+    t = upload(c, "05_kontrak_E_salah_hitung.pdf", "TRD2")
+    assert t["status"] != "GAGAL_PROSES" and t["fallback"].startswith("Kuota")
+    assert any("Beralih" in e["msg"] for e in t["telemetry"])

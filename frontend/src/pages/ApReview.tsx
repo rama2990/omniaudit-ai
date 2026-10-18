@@ -109,6 +109,7 @@ export default function ApReview() {
 
       {t.status === 'DISPUTE' && t.needs_cfo && (
         <Alert severity="warning" sx={{ mb: 2 }}>Nilai klaim di atas Rp500 juta. Setelah ditinjau, termin ini harus disetujui CFO sebelum diposting.</Alert>)}
+      {t.fallback && <Alert severity="info" sx={{ mb: 2 }}>Gemini tidak tersedia saat dokumen ini diproses ({t.fallback}). Dokumen dibaca dengan pola teks lokal; periksa nilai bertanda sebelum menyetujui.</Alert>}
       {t.erp_ref && <Alert severity="success" sx={{ mb: 2 }}>Jurnal terposting ke ERP dengan nomor batch {t.erp_ref}.</Alert>}
       {t.error && t.status !== 'POSTED' && <Alert severity="error" sx={{ mb: 2 }}>{t.error}</Alert>}
 

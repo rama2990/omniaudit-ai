@@ -133,7 +133,13 @@ def process_termin(tid: int):
             m = extractor.mode()
             publish(tid, "Parser Agent", f"Mengirim teks OCR ke Gemini ({os.getenv('GEMINI_MODEL', 'gemini-flash-latest')})…"
                     if m == "gemini" else "Mode offline: ekstraksi dengan pola teks lokal")
-            t.extraction = extractor.extract(t.pages)
+            try:
+                t.extraction = extractor.extract(t.pages)
+            except RuntimeError as e:
+                if m != "gemini" or os.getenv("GEMINI_FALLBACK", "1") == "0":
+                    raise
+                publish(tid, "Parser Agent", f"{e} Beralih ke pembaca pola teks lokal.", "warn")
+                t.extraction = extractor.extract_offline(t.pages, str(e))
             types = ", ".join(f"h{k}={v}" for k, v in sorted(t.extraction["page_types"].items()))
             publish(tid, "Parser Agent", f"Klasifikasi halaman: {types}")
             for n in extractor.WAJIB:

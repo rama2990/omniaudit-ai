@@ -1,4 +1,5 @@
 """OCR lokal: kata + bbox per halaman (FR-4). PDF digital via PyMuPDF, hasil scan via RapidOCR."""
+import unicodedata
 from functools import lru_cache
 from pathlib import Path
 
@@ -51,6 +52,7 @@ def ocr_pdf(path: str | Path) -> list[dict]:
                     words, source = [], "unreadable"
             for j, w in enumerate(words):
                 w["id"] = f"p{i}_w{j}"
+                w["text"] = unicodedata.normalize("NFKC", w["text"])  # OCR scan: "：" -> ":"
             pages.append({"n": i, "width": page.rect.width, "height": page.rect.height,
                           "source": source, "words": words})
     return pages

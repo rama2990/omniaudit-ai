@@ -241,7 +241,8 @@ def termin_detail(tid: int, p: Persona = Depends(me), s: Session = Depends(db)):
                   for pg in t.pages],
         "fields": fields, "contract": contract, "vendor": vendor, "summary": summary, "journal": journal,
         "telemetry": t.telemetry or pipeline.TELEMETRY.get(t.id, []), "actions": allowed_actions(t, p),
-        "mode": ext.get("mode"), "model": ext.get("model"), "contracts": contracts,
+        "mode": ext.get("mode"), "model": ext.get("model"), "fallback": ext.get("fallback_reason"),
+        "contracts": contracts,
         "uploaded_at": t.uploaded_at.isoformat(), "posted_at": t.posted_at.isoformat() if t.posted_at else None,
     }
 
@@ -343,7 +344,10 @@ def termin_action(tid: int, body: ApAction, bg: BackgroundTasks, p: Persona = De
     if a == "submit_cfo" and not t.needs_cfo:
         raise HTTPException(409, "Termin ini tidak membutuhkan persetujuan CFO")
     if target == "POST":
-        pipeline.post(s, t, p.id, p.role)
+        try:
+            pipeline.post(s, t, p.id, p.role)
+        except ValueError as e:
+            raise HTTPException(409, str(e))
     elif target == "PROCESSING":
         t.status = "PROCESSING"
         bg.add_task(pipeline.process_termin, t.id)

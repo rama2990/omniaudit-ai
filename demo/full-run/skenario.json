@@ -1,0 +1,464 @@
+{
+ "ap": [
+  {
+   "id": "FR-01",
+   "hari": "Senin 12 Okt",
+   "persona": "dewi",
+   "spv": "SLO1",
+   "file": "FR-01_SK_kontrak-B_termin-3_overbilling.pdf",
+   "judul": "Overbilling: invoice 60%, BAP fisik 55%",
+   "expect": {
+    "status": "DISPUTE",
+    "codes": [
+     "OVERBILLING"
+    ],
+    "needs_cfo": false
+   },
+   "actions": [
+    {
+     "do": "post",
+     "by": "dewi"
+    }
+   ],
+   "final": {
+    "status": "POSTED",
+    "net": 234562500
+   }
+  },
+  {
+   "id": "FR-02",
+   "hari": "Senin 12 Okt",
+   "persona": "dewi",
+   "spv": "SLO1",
+   "file": "FR-02_BKM_kontrak-A_termin-3_butuh-CFO.pdf",
+   "judul": "Klaim Rp2,997 M melebihi BAP; wajib persetujuan CFO",
+   "expect": {
+    "status": "DISPUTE",
+    "codes": [
+     "OVERBILLING"
+    ],
+    "needs_cfo": true
+   },
+   "actions": [
+    {
+     "do": "submit_cfo",
+     "by": "dewi"
+    },
+    {
+     "do": "cfo_approve",
+     "by": "hartono"
+    }
+   ],
+   "final": {
+    "status": "POSTED",
+    "net": 2112875000
+   }
+  },
+  {
+   "id": "FR-03",
+   "hari": "Selasa 13 Okt",
+   "persona": "dewi",
+   "spv": "SLO1",
+   "file": "FR-03_BKM_kontrak-G_klaim-ganda.pdf",
+   "judul": "Nomor invoice yang sama sudah ditagihkan ke SPV TRD2",
+   "expect": {
+    "status": "HARD_STOP",
+    "codes": [
+     "KLAIM_GANDA"
+    ]
+   },
+   "actions": [
+    {
+     "do": "cfo_reject",
+     "by": "hartono",
+     "reason": "Double billing dengan INV/BKM/2026/077 di TRD2"
+    }
+   ],
+   "final": {
+    "status": "REJECTED"
+   }
+  },
+  {
+   "id": "FR-04",
+   "hari": "Selasa 13 Okt",
+   "persona": "dewi",
+   "spv": "TRD2",
+   "file": "FR-04_BJA_kontrak-C_termin-2_retensi-pph.pdf",
+   "judul": "Retensi tidak dicantumkan, tarif PPh tidak sesuai SBU (tetap hijau, badge kuning)",
+   "expect": {
+    "status": "READY",
+    "codes": [
+     "OMISI_RETENSI",
+     "PAJAK_SBU"
+    ]
+   },
+   "actions": [
+    {
+     "do": "post",
+     "by": "dewi"
+    }
+   ],
+   "final": {
+    "status": "POSTED",
+    "net": 408000000
+   }
+  },
+  {
+   "id": "FR-05",
+   "hari": "Selasa 13 Okt",
+   "persona": "dewi",
+   "spv": "TRD2",
+   "file": "FR-05_AN_kontrak-E_salah-hitung.pdf",
+   "judul": "Rincian pekerjaan tidak sama dengan total; ditolak",
+   "expect": {
+    "status": "DISPUTE",
+    "codes": [
+     "MATEMATIKA"
+    ]
+   },
+   "actions": [
+    {
+     "do": "reject",
+     "by": "dewi",
+     "reason": "Rincian pekerjaan tidak sama dengan total tagihan; vendor diminta merevisi invoice."
+    }
+   ],
+   "final": {
+    "status": "REJECTED"
+   }
+  },
+  {
+   "id": "FR-06",
+   "hari": "Rabu 14 Okt",
+   "persona": "dewi",
+   "spv": "TRD2",
+   "file": "FR-06_AN_kontrak-E_revisi.pdf",
+   "judul": "Invoice revisi dari vendor, sekarang bersih",
+   "expect": {
+    "status": "READY",
+    "codes": []
+   },
+   "actions": [
+    {
+     "do": "post",
+     "by": "dewi"
+    }
+   ],
+   "final": {
+    "status": "POSTED",
+    "net": 164000000
+   }
+  },
+  {
+   "id": "FR-07",
+   "hari": "Rabu 14 Okt",
+   "persona": "budi",
+   "spv": "GCT3",
+   "file": "FR-07_PP_kontrak-F_nominal-digelembungkan.pdf",
+   "judul": "Progres jujur 70%, tetapi nominal tagihan digelembungkan",
+   "expect": {
+    "status": "DISPUTE",
+    "codes": [
+     "NILAI_TIDAK_SESUAI_PROGRES",
+     "FAKTUR_PAJAK"
+    ]
+   },
+   "actions": [
+    {
+     "do": "post",
+     "by": "budi"
+    }
+   ],
+   "final": {
+    "status": "POSTED",
+    "net": 120000000
+   }
+  },
+  {
+   "id": "FR-08",
+   "hari": "Rabu 14 Okt",
+   "persona": "budi",
+   "spv": "GCT3",
+   "file": "FR-08_IBP_kontrak-D_bersih_hasil-scan.pdf",
+   "judul": "Dokumen hasil scan, bersih; ERP sempat gagal lalu dikirim ulang",
+   "expect": {
+    "status": "READY",
+    "codes": []
+   },
+   "actions": [
+    {
+     "do": "erp_fail",
+     "on": true
+    },
+    {
+     "do": "post",
+     "by": "budi",
+     "expect": "ERP_GAGAL"
+    },
+    {
+     "do": "erp_fail",
+     "on": false
+    },
+    {
+     "do": "resend",
+     "by": "budi"
+    }
+   ],
+   "final": {
+    "status": "POSTED",
+    "net": 305299500
+   }
+  },
+  {
+   "id": "FR-09",
+   "hari": "Kamis 15 Okt",
+   "persona": "dewi",
+   "spv": "SLO1",
+   "file": "FR-09_SK_kontrak-B_termin-4.pdf",
+   "judul": "Termin berikutnya: progres sebelumnya otomatis 55% (dari FR-01)",
+   "expect": {
+    "status": "READY",
+    "codes": []
+   },
+   "actions": [
+    {
+     "do": "post",
+     "by": "dewi"
+    }
+   ],
+   "final": {
+    "status": "POSTED",
+    "net": 312750000
+   }
+  },
+  {
+   "id": "FR-10",
+   "hari": "Kamis 15 Okt",
+   "persona": "dewi",
+   "spv": "TRD2",
+   "file": "FR-10_BKM_kontrak-H_progres-inkremental.pdf",
+   "judul": "Invoice menulis progres termin ini (7%), bukan kumulatif; auditor mengoreksi ke 37%",
+   "expect": {
+    "status": "DISPUTE",
+    "codes_any": [
+     "TERMIN_TIDAK_VALID"
+    ]
+   },
+   "actions": [
+    {
+     "do": "override",
+     "by": "dewi",
+     "field": "progres_klaim",
+     "value": "37",
+     "reason": "Invoice menulis progres termin (7%); kumulatif = 30% + 7% = 37%"
+    },
+    {
+     "do": "post",
+     "by": "dewi"
+    }
+   ],
+   "final": {
+    "status": "POSTED",
+    "net": 361725000
+   }
+  },
+  {
+   "id": "FR-11",
+   "hari": "Jumat 16 Okt",
+   "persona": "dewi",
+   "spv": "TRD2",
+   "file": "FR-11_BJA_kontrak-C_nomor-kontrak-salah-tulis.pdf",
+   "judul": "Vendor memakai nomor kontrak versinya sendiri; auditor menghubungkan manual",
+   "expect": {
+    "status": "DISPUTE",
+    "codes": [
+     "KONTRAK_TIDAK_DITEMUKAN"
+    ]
+   },
+   "actions": [
+    {
+     "do": "set_contract",
+     "by": "dewi",
+     "contract": "SPK/TRD/2026/003",
+     "reason": "SPK-TRD-03/2026 adalah penomoran internal vendor untuk SPK/TRD/2026/003"
+    },
+    {
+     "do": "post",
+     "by": "dewi"
+    }
+   ],
+   "final": {
+    "status": "POSTED",
+    "net": 408000000
+   }
+  },
+  {
+   "id": "FR-12",
+   "hari": "Jumat 16 Okt",
+   "persona": "dewi",
+   "spv": "SLO1",
+   "file": "FR-12_BKM_kontrak-A_denda-menelan-termin.pdf",
+   "judul": "Proyek telat 16 hari: denda memotong habis termin kecil, sisanya terbawa",
+   "expect": {
+    "status": "READY",
+    "codes": []
+   },
+   "actions": [
+    {
+     "do": "post",
+     "by": "dewi"
+    }
+   ],
+   "final": {
+    "status": "POSTED",
+    "net": 0,
+    "pen": 92515000,
+    "pen_left": 27485000
+   }
+  }
+ ],
+ "ar": [
+  {
+   "id": "FR-13",
+   "hari": "Sabtu 17 Okt",
+   "persona": "andi",
+   "spv": "SLO1",
+   "file": "FR-13_rekening_koran_SLO1_2026-10-17.csv",
+   "judul": "Rekening koran SLO1: VA otomatis, waiver KPR, unit kembar milik satu investor",
+   "expect": {
+    "rows": 29,
+    "auto": 6,
+    "recommended": 19,
+    "manual": 4,
+    "duplicates": 1
+   },
+   "decisions": [
+    {
+     "memo": "TRF BPK SUTRISNO BLK C1/02",
+     "status": "RECOMMENDED",
+     "unit": "C1-02",
+     "waiver": [
+      "Pencairan KPR Bank",
+      "Menunggu pencairan KPR Bank BTN"
+     ],
+     "penalty": "WAIVED"
+    },
+    {
+     "memo": "TRF HENDRA GUNAWAN CLUSTER C1",
+     "status": "MANUAL_REVIEW",
+     "unit": "C1-03",
+     "note": "Dua unit milik pembeli yang sama; Andi memilih C1-03 sesuai konfirmasi telepon"
+    },
+    {
+     "memo": "PEMBAYARAN UNIT C1 08",
+     "status": "RECOMMENDED",
+     "unit": "C1-08"
+    }
+   ]
+  },
+  {
+   "id": "FR-14",
+   "hari": "Sabtu 17 Okt",
+   "persona": "andi",
+   "spv": "TRD2",
+   "file": "FR-14_rekening_koran_TRD2_2026-10-17.csv",
+   "judul": "Rekening koran TRD2: waiver eksekutif, bayar sebagian, lebih bayar, pengirim pasangan",
+   "expect": {
+    "rows": 8,
+    "auto": 0,
+    "recommended": 6,
+    "manual": 2,
+    "duplicates": 0
+   },
+   "decisions": [
+    {
+     "memo": "TWR A 10/03 ANGS OKT",
+     "status": "RECOMMENDED",
+     "unit": "A-10-03",
+     "waiver": [
+      "Kewenangan Eksekutif",
+      "Pembeli VIP, pemilik 3 unit di Tower A"
+     ],
+     "penalty": "MENUNGGU_CFO",
+     "cfo": {
+      "by": "hartono",
+      "approve": true,
+      "penalty": "WAIVED"
+     }
+    },
+    {
+     "memo": "CICILAN A-11-01 SEBAGIAN",
+     "status": "RECOMMENDED",
+     "unit": "A-11-01",
+     "settled": false
+    },
+    {
+     "memo": "UNIT A 11 03",
+     "status": "RECOMMENDED",
+     "unit": "A-11-03"
+    },
+    {
+     "memo": "TRF A-12-03",
+     "status": "MANUAL_REVIEW",
+     "unit": "A-12-03",
+     "note": "Dikirim oleh pasangan pembeli; skor nama rendah, kode unit cocok"
+    },
+    {
+     "memo": "PELUNASAN 2 BLN A/12/04",
+     "status": "RECOMMENDED",
+     "unit": "A-12-04"
+    },
+    {
+     "memo": "ANGS A-11-04",
+     "status": "RECOMMENDED",
+     "unit": "A-11-04",
+     "selisih": 200000
+    }
+   ]
+  },
+  {
+   "id": "FR-15",
+   "hari": "Sabtu 17 Okt",
+   "persona": "sari",
+   "spv": "GCT3",
+   "file": "FR-15_rekening_koran_GCT3_2026-10-17.csv",
+   "judul": "Rekening koran GCT3: waiver KPR, VA telat, potongan biaya transfer, dua angsuran",
+   "expect": {
+    "rows": 8,
+    "auto": 0,
+    "recommended": 7,
+    "manual": 1,
+    "duplicates": 0
+   },
+   "decisions": [
+    {
+     "memo": "BLOK G1 NO 2 KPR",
+     "status": "RECOMMENDED",
+     "unit": "G1-02",
+     "waiver": [
+      "Pencairan KPR Bank",
+      "KPR Bank Mandiri cair 20 Oktober"
+     ],
+     "penalty": "WAIVED"
+    },
+    {
+     "memo": "VA PAYMENT",
+     "status": "RECOMMENDED",
+     "unit": "G1-04",
+     "penalty": "DITAGIH"
+    },
+    {
+     "memo": "G1/06 TRF",
+     "status": "RECOMMENDED",
+     "unit": "G1-06",
+     "selisih": 150000
+    },
+    {
+     "memo": "ANGS OKT NOV G1-09",
+     "status": "RECOMMENDED",
+     "unit": "G1-09"
+    }
+   ]
+  }
+ ]
+}

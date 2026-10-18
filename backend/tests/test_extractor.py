@@ -77,3 +77,24 @@ def test_jalur_gemini_dengan_client_tiruan(pages, monkeypatch):
     assert ext["mode"] == "gemini"
     assert value(ext, "progres_bap") == 55 and value(ext, "bruto_tertulis") == 333_000_000
     assert confidence(ext) >= D("0.85")
+
+
+def test_kuota_habis_tidak_diulang(pages, monkeypatch):
+    from google import genai
+
+    from app import extractor as ex
+    calls = []
+
+    class Models:
+        def generate_content(self, **kw):
+            calls.append(1)
+            raise Exception("429 RESOURCE_EXHAUSTED quota")
+
+    class FakeClient:
+        def __init__(self, **kw):
+            self.models = Models()
+
+    monkeypatch.setattr(genai, "Client", FakeClient)
+    with pytest.raises(RuntimeError, match="Kuota Gemini habis"):
+        ex._gemini(pages)
+    assert len(calls) == 1  # tidak membuang kuota dengan mengulang
