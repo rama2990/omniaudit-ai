@@ -3,18 +3,18 @@
 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:28px">
 <div style="display:flex;flex-direction:column;gap:12px;background:#E8F0FE;border-radius:24px;padding:36px">
 <x-icon name="Lightbulb" style="width:48px;height:48px;color:#1A73E8"></x-icon>
-<h3 style="font-size:36px;font-weight:600">Gemini</h3>
-<p style="font-size:26px;line-height:1.4;color:#3C4043">Page classification and field extraction with structured JSON output, through Google AI Studio.</p>
+<h3 style="font-size:36px;font-weight:600">Gemini 2.5 Flash</h3>
+<p style="font-size:26px;line-height:1.4;color:#3C4043">Page classification and field extraction with structured JSON output, on Vertex AI.</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:12px;background:#E8F0FE;border-radius:24px;padding:36px">
 <x-icon name="Cloud" style="width:48px;height:48px;color:#1A73E8"></x-icon>
 <h3 style="font-size:36px;font-weight:600">Cloud Run</h3>
-<p style="font-size:26px;line-height:1.4;color:#3C4043">One container serving the API and web app in the Jakarta region; the API key lives in Secret Manager.</p>
+<p style="font-size:26px;line-height:1.4;color:#3C4043">One container serving the API and web app in the Jakarta region, calling Vertex AI with its service account; no API key.</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:12px;background:#E8F0FE;border-radius:24px;padding:36px">
 <x-icon name="Globe" style="width:48px;height:48px;color:#1A73E8"></x-icon>
-<h3 style="font-size:36px;font-weight:600">Vertex AI ready</h3>
-<p style="font-size:26px;line-height:1.4;color:#3C4043">A configuration switch moves to Vertex AI in asia-southeast2, keeping financial documents in Indonesia.</p>
+<h3 style="font-size:36px;font-weight:600">Path to residency</h3>
+<p style="font-size:26px;line-height:1.4;color:#3C4043">The model runs on the global endpoint today; production pins a regional endpoint for financial documents.</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:12px;background:#FDFDFC;border:1px solid #DADCE0;border-radius:24px;padding:36px">
 <x-icon name="Search" style="width:48px;height:48px;color:#5F6368"></x-icon>
@@ -32,5 +32,5 @@
 <p style="font-size:26px;line-height:1.4;color:#3C4043">If the quota runs out or the network drops, documents are still read by local text patterns, with a notice.</p>
 </div>
 </div>
-<aside>Gemini reads documents and returns JSON in a schema we define, so the output can be validated. The app runs as a single container on Cloud Run in the Jakarta region, with the API key in Secret Manager. For production, a configuration change moves to Vertex AI in asia-southeast2 so financial data stays in Indonesia. OCR runs locally, so page images are never sent out.</aside>
+<aside>Gemini 2.5 Flash on Vertex AI reads documents and returns JSON in a schema we define, so the output can be validated. The app runs as a single container on Cloud Run in the Jakarta region and calls Vertex AI with its own service account, so there is no API key on the server. Today the model is served from the global endpoint; for production we pin a regional endpoint so financial documents stay in-country. OCR runs locally, so page images are never sent out.</aside>
 </section>

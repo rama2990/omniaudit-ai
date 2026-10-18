@@ -30,7 +30,7 @@ uv run uvicorn app.main:app --port 8000
 
 Open http://localhost:8000. On first start the database is seeded automatically. This takes about a minute because one scanned PDF goes through OCR.
 
-**Enable Gemini:** copy `backend/.env.example` to `backend/.env` and set `GEMINI_API_KEY`. Without a key the app runs in **offline mode**, where fields are extracted with local text patterns. This is also the fallback if the network drops during a demo.
+**Enable Gemini:** copy `backend/.env.example` to `backend/.env` and set `GEMINI_API_KEY`. The deployed prototype uses Gemini 2.5 Flash on Vertex AI through the Cloud Run service account; see `deploy.md`. Without a key the app runs in **offline mode**, where fields are extracted with local text patterns. This is also the fallback if the network drops during a demo.
 
 **Reset demo data:**
 

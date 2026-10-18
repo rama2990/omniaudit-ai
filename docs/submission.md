@@ -24,7 +24,7 @@ https://github.com/rama2990/omniaudit-ai
 
 ### Short (~60 words)
 
-OmniAudit AI is an audit dashboard for multi-entity property developers. Gemini reads contractor invoices, site inspection reports, tax invoices and bank statements. Deterministic code computes VAT, construction withholding tax, retention, down-payment recoupment, late penalties and balanced journals. Humans decide. Contractor overbilling is locked before payment, buyer transfers are matched to their units, and every decision lands in a tamper-evident audit trail.
+OmniAudit AI is an audit dashboard for multi-entity property developers. Gemini 2.5 Flash on Vertex AI reads contractor invoices, site inspection reports, tax invoices and bank statements. Deterministic code computes VAT, construction withholding tax, retention, down-payment recoupment, late penalties and balanced journals. Humans decide. Contractor overbilling is locked before payment, buyer transfers are matched to their units, and every decision lands in a tamper-evident audit trail.
 
 ### Long (~170 words)
 
@@ -40,4 +40,4 @@ OmniAudit AI splits the work clearly:
 
 On the receivables side, a match score (unit code, name, amount) assigns transfers to units, computes installment late fees and sends receipts to buyers.
 
-The prototype runs on Google Cloud Run in Jakarta with local OCR. It has 74 automated tests and a one-week simulation of 15 scenarios, all matching expectations.
+The prototype runs on Google Cloud Run in Jakarta, with Gemini 2.5 Flash on Vertex AI and local OCR. It has 74 automated tests and a one-week simulation of 15 scenarios, all matching expectations.
