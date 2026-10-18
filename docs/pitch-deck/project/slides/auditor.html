@@ -1,0 +1,15 @@
+<section id="auditor" data-transition="fade" style="background:#F8F9FA;color:#202124;font-family:'Roboto Flex', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:40px">
+<h2 style="font-size:64px;font-weight:600;line-height:1.15">Delapan pemeriksaan otomatis di setiap tagihan</h2>
+<table style="font-size:26px;color:#202124;background:#FDFDFC;border:1px solid #DADCE0;border-radius:16px">
+<tr style="background:#E8F0FE"><th style="width:30%">Pemeriksaan</th><th style="width:38%">Contoh pemicu</th><th style="width:32%">Tindakan sistem</th></tr>
+<tr><td>Overbilling progres</td><td>Klaim 80%, BAP fisik 75%</td><td>Dispute, hitung ulang dengan BAP</td></tr>
+<tr><td>Klaim ganda lintas SPV</td><td>Invoice + NPWP sama di SPV lain</td><td>Hard Stop, hanya CFO</td></tr>
+<tr><td>Nominal digelembungkan</td><td>Total tidak sesuai nilai progres</td><td>Dispute</td></tr>
+<tr><td>Salah hitung</td><td>Rincian + PPN tidak sama dengan total</td><td>Dispute</td></tr>
+<tr><td>Retensi tidak dicantumkan</td><td>Kolom retensi kosong</td><td>Tetap dipotong 5%, badge kuning</td></tr>
+<tr><td>PPh tidak sesuai SBU</td><td>Tertulis 2,65%, vendor tanpa SBU</td><td>Pakai tarif master 4%</td></tr>
+<tr><td>Faktur pajak tidak cocok</td><td>PPN atau NPWP penjual berbeda</td><td>Catat: PPN Masukan tertahan</td></tr>
+<tr><td>Termin tidak valid</td><td>Progres mundur, termin lain terbuka</td><td>Dispute dengan alasan</td></tr>
+</table>
+<aside>Adversarial Auditor adalah mesin aturan, bukan LLM. Delapan pemeriksaan berjalan di setiap tagihan. Temuan tinggi mengunci tagihan sebagai dispute; temuan kritis seperti tagihan ganda lintas SPV menghentikan total dan hanya CFO yang bisa membuka. Temuan sedang dikoreksi otomatis dan tetap bisa disetujui dengan tanda kuning. Tarif PPh 4(2) mengikuti PP 9/2022 berdasarkan SBU di master vendor, bukan angka yang ditulis kontraktor.</aside>
+</section>

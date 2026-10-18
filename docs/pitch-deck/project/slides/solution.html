@@ -1,0 +1,24 @@
+<section id="solution" data-transition="fade" style="background:#F8F9FA;color:#202124;font-family:'Roboto Flex', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:48px">
+<h2 style="font-size:64px;font-weight:600;line-height:1.15">Siapa mengerjakan apa</h2>
+<div style="display:flex;align-items:stretch;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#E8F0FE;border-radius:24px;padding:40px">
+<p style="font-size:24px;font-weight:700;color:#174EA6">1. Membaca</p>
+<h3 style="font-size:40px;font-weight:600">Gemini + OCR lokal</h3>
+<p style="font-size:28px;line-height:1.4;color:#3C4043">Mengenali invoice, BAP, faktur pajak, dan foto. Setiap angka wajib menunjuk ke kata di dokumen; nilai yang tidak ditemukan dianggap tidak yakin.</p>
+</div>
+<x-shape kind="arrow-right" style="width:64px;height:40px;background:#9AA0A6;align-self:center"></x-shape>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#E6F4EA;border-radius:24px;padding:40px">
+<p style="font-size:24px;font-weight:700;color:#0D652D">2. Menghitung</p>
+<h3 style="font-size:40px;font-weight:600">Kode deterministik</h3>
+<p style="font-size:28px;line-height:1.4;color:#3C4043">PPN, PPh 4(2) per SBU, retensi, uang muka, denda, match score, dan jurnal berimbang. Desimal presisi, bisa diulang dan diaudit.</p>
+</div>
+<x-shape kind="arrow-right" style="width:64px;height:40px;background:#9AA0A6;align-self:center"></x-shape>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FEF7E0;border-radius:24px;padding:40px">
+<p style="font-size:24px;font-weight:700;color:#8A4B00">3. Memutuskan</p>
+<h3 style="font-size:40px;font-weight:600">Auditor dan CFO</h3>
+<p style="font-size:28px;line-height:1.4;color:#3C4043">Yang bersih disetujui satu klik. Yang janggal dikunci dan dibuka di layar split-view. Override wajib beralasan dan tercatat.</p>
+</div>
+</div>
+<p style="font-size:32px;line-height:1.4;width:1500px">AI tidak pernah menghitung uang. Itu yang membuat hasilnya bisa dipertanggungjawabkan di depan auditor eksternal.</p>
+<aside>Ini inti desainnya. Gemini hanya membaca dan menunjuk lokasi angka di dokumen asli. Kalau angka yang disebut AI tidak ada di teks dokumen, sistem menurunkan keyakinannya ke nol, jadi halusinasi tidak bisa lolos ke perhitungan. Semua uang dihitung kode biasa dengan desimal presisi. Manusia memutuskan, dan setiap keputusan tercatat.</aside>
+</section>
