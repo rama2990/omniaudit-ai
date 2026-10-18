@@ -1,36 +1,36 @@
 <section id="tech" data-transition="fade" style="background:#F8F9FA;color:#202124;font-family:'Roboto Flex', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:48px">
-<h2 style="font-size:64px;font-weight:600;line-height:1.15">Dibangun di atas Google</h2>
+<h2 style="font-size:64px;font-weight:600;line-height:1.15">Built on Google</h2>
 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:28px">
 <div style="display:flex;flex-direction:column;gap:12px;background:#E8F0FE;border-radius:24px;padding:36px">
 <x-icon name="Lightbulb" style="width:48px;height:48px;color:#1A73E8"></x-icon>
 <h3 style="font-size:36px;font-weight:600">Gemini</h3>
-<p style="font-size:26px;line-height:1.4;color:#3C4043">Klasifikasi halaman dan ekstraksi field dengan output JSON terstruktur, lewat Google AI Studio.</p>
+<p style="font-size:26px;line-height:1.4;color:#3C4043">Page classification and field extraction with structured JSON output, through Google AI Studio.</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:12px;background:#E8F0FE;border-radius:24px;padding:36px">
 <x-icon name="Cloud" style="width:48px;height:48px;color:#1A73E8"></x-icon>
 <h3 style="font-size:36px;font-weight:600">Cloud Run</h3>
-<p style="font-size:26px;line-height:1.4;color:#3C4043">Satu container berisi API dan aplikasi web, region Jakarta; API key di Secret Manager.</p>
+<p style="font-size:26px;line-height:1.4;color:#3C4043">One container serving the API and web app in the Jakarta region; the API key lives in Secret Manager.</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:12px;background:#E8F0FE;border-radius:24px;padding:36px">
 <x-icon name="Globe" style="width:48px;height:48px;color:#1A73E8"></x-icon>
-<h3 style="font-size:36px;font-weight:600">Siap Vertex AI</h3>
-<p style="font-size:26px;line-height:1.4;color:#3C4043">Pindah ke Vertex AI asia-southeast2 cukup lewat konfigurasi, agar dokumen keuangan tetap di Indonesia.</p>
+<h3 style="font-size:36px;font-weight:600">Vertex AI ready</h3>
+<p style="font-size:26px;line-height:1.4;color:#3C4043">A configuration switch moves to Vertex AI in asia-southeast2, keeping financial documents in Indonesia.</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:12px;background:#FDFDFC;border:1px solid #DADCE0;border-radius:24px;padding:36px">
 <x-icon name="Search" style="width:48px;height:48px;color:#5F6368"></x-icon>
-<h3 style="font-size:36px;font-weight:600">OCR lokal</h3>
-<p style="font-size:26px;line-height:1.4;color:#3C4043">PyMuPDF untuk PDF digital, RapidOCR (model PaddleOCR) untuk hasil scan; gambar dokumen tidak keluar server.</p>
+<h3 style="font-size:36px;font-weight:600">Local OCR</h3>
+<p style="font-size:26px;line-height:1.4;color:#3C4043">PyMuPDF for digital PDFs and RapidOCR (PaddleOCR models) for scans; page images never leave the server.</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:12px;background:#FDFDFC;border:1px solid #DADCE0;border-radius:24px;padding:36px">
 <x-icon name="Code" style="width:48px;height:48px;color:#5F6368"></x-icon>
 <h3 style="font-size:36px;font-weight:600">FastAPI + React</h3>
-<p style="font-size:26px;line-height:1.4;color:#3C4043">Mesin hitung Python dengan Decimal, antarmuka Material UI berbahasa Indonesia.</p>
+<p style="font-size:26px;line-height:1.4;color:#3C4043">A Python calculation engine on exact decimals, with a Material UI front end.</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:12px;background:#FDFDFC;border:1px solid #DADCE0;border-radius:24px;padding:36px">
 <x-icon name="Trust" style="width:48px;height:48px;color:#5F6368"></x-icon>
-<h3 style="font-size:36px;font-weight:600">Tahan gangguan</h3>
-<p style="font-size:26px;line-height:1.4;color:#3C4043">Kuota habis atau jaringan putus: dokumen tetap dibaca pola teks lokal, dengan pemberitahuan.</p>
+<h3 style="font-size:36px;font-weight:600">Resilient</h3>
+<p style="font-size:26px;line-height:1.4;color:#3C4043">If the quota runs out or the network drops, documents are still read by local text patterns, with a notice.</p>
 </div>
 </div>
-<aside>Gemini membaca dokumen dengan output JSON yang skemanya kita tentukan, jadi hasilnya bisa divalidasi. Aplikasi berjalan sebagai satu container di Cloud Run region Jakarta dengan API key di Secret Manager. Untuk produksi, cukup ubah konfigurasi ke Vertex AI di asia-southeast2 agar data keuangan tidak keluar Indonesia. OCR berjalan lokal sehingga gambar dokumen tidak dikirim ke luar.</aside>
+<aside>Gemini reads documents and returns JSON in a schema we define, so the output can be validated. The app runs as a single container on Cloud Run in the Jakarta region, with the API key in Secret Manager. For production, a configuration change moves to Vertex AI in asia-southeast2 so financial data stays in Indonesia. OCR runs locally, so page images are never sent out.</aside>
 </section>

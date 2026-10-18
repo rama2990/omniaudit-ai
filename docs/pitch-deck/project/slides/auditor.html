@@ -1,15 +1,15 @@
 <section id="auditor" data-transition="fade" style="background:#F8F9FA;color:#202124;font-family:'Roboto Flex', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:40px">
-<h2 style="font-size:64px;font-weight:600;line-height:1.15">Delapan pemeriksaan otomatis di setiap tagihan</h2>
+<h2 style="font-size:64px;font-weight:600;line-height:1.15">Eight automatic checks on every bill</h2>
 <table style="font-size:26px;color:#202124;background:#FDFDFC;border:1px solid #DADCE0;border-radius:16px">
-<tr style="background:#E8F0FE"><th style="width:30%">Pemeriksaan</th><th style="width:38%">Contoh pemicu</th><th style="width:32%">Tindakan sistem</th></tr>
-<tr><td>Overbilling progres</td><td>Klaim 80%, BAP fisik 75%</td><td>Dispute, hitung ulang dengan BAP</td></tr>
-<tr><td>Klaim ganda lintas SPV</td><td>Invoice + NPWP sama di SPV lain</td><td>Hard Stop, hanya CFO</td></tr>
-<tr><td>Nominal digelembungkan</td><td>Total tidak sesuai nilai progres</td><td>Dispute</td></tr>
-<tr><td>Salah hitung</td><td>Rincian + PPN tidak sama dengan total</td><td>Dispute</td></tr>
-<tr><td>Retensi tidak dicantumkan</td><td>Kolom retensi kosong</td><td>Tetap dipotong 5%, badge kuning</td></tr>
-<tr><td>PPh tidak sesuai SBU</td><td>Tertulis 2,65%, vendor tanpa SBU</td><td>Pakai tarif master 4%</td></tr>
-<tr><td>Faktur pajak tidak cocok</td><td>PPN atau NPWP penjual berbeda</td><td>Catat: PPN Masukan tertahan</td></tr>
-<tr><td>Termin tidak valid</td><td>Progres mundur, termin lain terbuka</td><td>Dispute dengan alasan</td></tr>
+<tr style="background:#E8F0FE"><th style="width:30%">Check</th><th style="width:38%">Example trigger</th><th style="width:32%">System action</th></tr>
+<tr><td>Progress overbilling</td><td>Claim 80%, site inspection 75%</td><td>Dispute, recalculate from inspection</td></tr>
+<tr><td>Duplicate across SPVs</td><td>Same invoice no. and tax ID in another SPV</td><td>Hard stop, CFO only</td></tr>
+<tr><td>Inflated amount</td><td>Total doesn’t match the progress value</td><td>Dispute</td></tr>
+<tr><td>Arithmetic error</td><td>Line items plus VAT don’t equal the total</td><td>Dispute</td></tr>
+<tr><td>Missing retention</td><td>No retention line on the invoice</td><td>Still deducts 5%, yellow flag</td></tr>
+<tr><td>Wrong tax rate</td><td>2.65% written, contractor has no grade</td><td>Uses the master rate, 4%</td></tr>
+<tr><td>Tax invoice mismatch</td><td>VAT or seller tax ID differs</td><td>Note: input VAT on hold</td></tr>
+<tr><td>Invalid progress claim</td><td>Progress went backwards, or another bill is open</td><td>Dispute with the reason</td></tr>
 </table>
-<aside>Adversarial Auditor adalah mesin aturan, bukan LLM. Delapan pemeriksaan berjalan di setiap tagihan. Temuan tinggi mengunci tagihan sebagai dispute; temuan kritis seperti tagihan ganda lintas SPV menghentikan total dan hanya CFO yang bisa membuka. Temuan sedang dikoreksi otomatis dan tetap bisa disetujui dengan tanda kuning. Tarif PPh 4(2) mengikuti PP 9/2022 berdasarkan SBU di master vendor, bukan angka yang ditulis kontraktor.</aside>
+<aside>The adversarial auditor is a rule engine, not an LLM. Eight checks run on every bill. High-severity findings lock the bill as a dispute; critical ones, like the same bill sent to two SPVs, stop it completely and only the CFO can release it. Medium findings are corrected automatically and the bill can still be approved with a yellow flag. Construction withholding tax follows Indonesian Government Regulation 9/2022, based on the contractor’s grade in the vendor master, not on the rate the contractor wrote.</aside>
 </section>
