@@ -132,7 +132,7 @@ def build(pkg: Package, path: Path, raster: bool = False) -> Path:
         for page in src:
             pix = page.get_pixmap(dpi=150)
             p = out.new_page(width=page.rect.width, height=page.rect.height)
-            p.insert_image(p.rect, pixmap=pix)
+            p.insert_image(p.rect, stream=pix.tobytes(output="jpg", jpg_quality=80))
         src.close()
         out.save(path)
         out.close()

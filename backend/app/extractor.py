@@ -115,8 +115,8 @@ def _find(page, pattern, flags=re.I):
 
 
 def _classify(page) -> str:
-    t = " ".join(w["text"] for w in page["words"][:12]).upper()
-    for key, typ in [("BERITA ACARA", "BAP"), ("FAKTUR PAJAK", "FAKTUR_PAJAK"), ("FOTO", "FOTO_PROGRES"),
+    t = "".join(w["text"] for w in page["words"][:12]).upper()  # OCR scan kadang menempelkan kata
+    for key, typ in [("BERITAACARA", "BAP"), ("FAKTURPAJAK", "FAKTUR_PAJAK"), ("FOTO", "FOTO_PROGRES"),
                      ("INVOICE", "INVOICE")]:
         if key in t:
             return typ
